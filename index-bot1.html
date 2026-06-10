@@ -1,0 +1,1061 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="LI Bot SJ"/>
+<meta name="theme-color" content="#05080f"/>
+<title>LinkedIn Bot — Simon JUTGÉ</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#05080f;--card:#0c1220;--border:#1a2540;
+  --cyan:#00c8ff;--green:#00e676;--red:#ff1744;--orange:#ff6d00;
+  --text:#c8d8f0;--muted:#4a6080;--white:#e8f0ff;
+  --li:#0a66c2;--grad:linear-gradient(135deg,#0a66c2,#00c8ff);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--text);font-family:'Space Grotesk',sans-serif;font-size:14px;line-height:1.6;min-height:100vh;overflow-x:hidden;}
+#bg-cv{position:fixed;inset:0;z-index:0;opacity:.1;pointer-events:none;}
+.app{position:relative;z-index:1;max-width:1100px;margin:0 auto;padding:20px 16px 40px;}
+
+.hdr{display:flex;align-items:center;gap:12px;margin-bottom:20px;padding:16px 20px;background:var(--card);border:1px solid var(--border);border-radius:12px;flex-wrap:wrap;}
+.av{width:42px;height:42px;border-radius:50%;background:var(--grad);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#fff;flex-shrink:0;box-shadow:0 0 16px rgba(0,200,255,.3);}
+.hdr-info{flex:1;}
+.hdr-info h1{font-size:15px;font-weight:700;color:var(--white);}
+.hdr-info p{font-size:11px;color:var(--muted);}
+.hdr-right{display:flex;align-items:center;gap:10px;}
+.dot-st{display:flex;align-items:center;gap:5px;font-size:11px;}
+.dot{width:7px;height:7px;border-radius:50%;animation:pulse 2s infinite;}
+.dot.g{background:var(--green);box-shadow:0 0 6px var(--green);}
+.svbdg{font-size:10px;padding:3px 8px;border-radius:8px;background:rgba(0,230,118,.1);border:1px solid rgba(0,230,118,.2);color:var(--green);}
+.free-badge{font-size:10px;padding:3px 10px;border-radius:8px;background:rgba(0,230,118,.15);border:1px solid rgba(0,230,118,.3);color:var(--green);font-weight:600;}
+
+.stats{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;}
+.stat{flex:1;min-width:70px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 14px;text-align:center;}
+.stat-v{font-family:'Fira Code',monospace;font-size:24px;font-weight:500;color:var(--cyan);}
+.stat-l{font-size:10px;color:var(--muted);letter-spacing:.05em;text-transform:uppercase;margin-top:2px;}
+
+.timer{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px 20px;margin-bottom:20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
+.t-disp{font-family:'Fira Code',monospace;font-size:26px;font-weight:500;color:var(--cyan);letter-spacing:2px;text-shadow:0 0 18px rgba(0,200,255,.4);}
+.t-lbl{font-size:10px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;}
+.t-next{font-size:11px;color:var(--muted);}
+.t-next b{color:var(--orange);}
+.t-btns{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;}
+.tbtn{padding:8px 14px;border-radius:6px;font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;}
+.tb-go{background:var(--green);color:#000;border:none;}
+.tb-pause{background:rgba(255,109,0,.15);color:var(--orange);border:1px solid rgba(255,109,0,.3);}
+.tb-reset{background:rgba(255,23,68,.1);color:var(--red);border:1px solid rgba(255,23,68,.2);}
+
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;}
+@media(max-width:700px){.grid{grid-template-columns:1fr;}}
+.full{grid-column:1/-1;}
+
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden;}
+.card-h{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;}
+.card-h h2{font-size:13px;font-weight:600;color:var(--white);}
+.bdg{margin-left:auto;font-size:10px;padding:2px 8px;border-radius:10px;font-weight:600;}
+.b-blue{background:rgba(10,102,194,.2);color:var(--cyan);border:1px solid rgba(0,200,255,.2);}
+.b-green{background:rgba(0,230,118,.1);color:var(--green);border:1px solid rgba(0,230,118,.2);}
+.b-orange{background:rgba(255,109,0,.1);color:var(--orange);border:1px solid rgba(255,109,0,.2);}
+.card-b{padding:16px 18px;}
+
+.type-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-bottom:14px;}
+.tbtype{padding:9px 6px;border-radius:8px;border:1px solid var(--border);background:transparent;cursor:pointer;font-family:'Space Grotesk',sans-serif;font-size:11px;color:var(--muted);text-align:center;transition:all .2s;line-height:1.4;}
+.tbtype:hover,.tbtype.act{background:rgba(0,200,255,.08);border-color:var(--cyan);color:var(--cyan);}
+.ttico{font-size:18px;display:block;margin-bottom:3px;}
+
+.topics{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:12px;}
+.topic{padding:4px 11px;border-radius:20px;border:1px solid var(--border);background:transparent;cursor:pointer;font-family:'Space Grotesk',sans-serif;font-size:11px;color:var(--muted);transition:all .2s;}
+.topic:hover,.topic.sel{background:rgba(10,102,194,.15);border-color:var(--li);color:var(--cyan);}
+
+.fld{margin-bottom:11px;}
+.fld label{display:block;font-size:10px;color:var(--muted);letter-spacing:.07em;text-transform:uppercase;margin-bottom:5px;}
+.fld textarea,.fld input,.fld select{width:100%;background:#060910;border:1px solid var(--border);border-radius:6px;padding:9px 12px;color:var(--white);font-family:'Space Grotesk',sans-serif;font-size:13px;outline:none;resize:vertical;transition:border-color .2s;}
+.fld textarea{min-height:70px;}
+.fld textarea:focus,.fld input:focus,.fld select:focus{border-color:var(--cyan);}
+.fld select option{background:#080d18;}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:10px 18px;border-radius:8px;font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .2s;text-decoration:none;}
+.btn-p{background:var(--grad);color:#fff;width:100%;}
+.btn-p:hover{box-shadow:0 4px 20px rgba(0,200,255,.3);transform:translateY(-1px);}
+.btn-c{background:rgba(0,200,255,.08);color:var(--cyan);border:1px solid rgba(0,200,255,.2)!important;font-size:11px;padding:6px 13px;}
+.btn-c:hover{background:rgba(0,200,255,.16);}
+.btn-s{background:rgba(255,109,0,.1);color:var(--orange);border:1px solid rgba(255,109,0,.25)!important;font-size:11px;padding:6px 13px;}
+.btn-s:hover{background:rgba(255,109,0,.2);}
+.btn-li{background:var(--li);color:#fff;font-size:11px;padding:6px 13px;}
+.btn-li:hover{background:#0077b5;}
+.btn-row{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px;}
+
+.post-wrap{display:none;margin-top:12px;}
+.post-out{background:#060a12;border:1px solid var(--border);border-radius:8px;padding:14px;font-size:13px;line-height:1.8;color:var(--text);white-space:pre-wrap;word-break:break-word;}
+.post-out .ht{color:var(--cyan);font-weight:600;cursor:pointer;}
+.post-out .ht:hover{text-decoration:underline;}
+.ht-bar{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px;padding:9px 11px;background:#060a12;border:1px solid var(--border);border-radius:6px;align-items:center;}
+.ht-bar .htag{font-size:11px;padding:3px 9px;border-radius:12px;background:rgba(0,200,255,.08);color:var(--cyan);border:1px solid rgba(0,200,255,.2);cursor:pointer;font-family:'Fira Code',monospace;transition:all .15s;}
+.ht-bar .htag:hover{background:rgba(0,200,255,.18);}
+.post-meta{font-size:10px;color:var(--muted);margin-top:4px;display:flex;justify-content:space-between;}
+
+.q-list{display:flex;flex-direction:column;gap:8px;max-height:340px;overflow-y:auto;padding-right:2px;}
+.q-list::-webkit-scrollbar{width:3px;}
+.q-list::-webkit-scrollbar-thumb{background:var(--border);}
+.q-item{background:#070b15;border:1px solid var(--border);border-radius:8px;padding:11px 13px;display:flex;gap:10px;align-items:flex-start;}
+.q-item.nxt{border-color:var(--cyan);box-shadow:0 0 10px rgba(0,200,255,.1);}
+.q-num{width:22px;height:22px;border-radius:50%;background:var(--grad);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;flex-shrink:0;}
+.q-item.nxt .q-num{animation:pulse 1.5s infinite;}
+.q-body{flex:1;min-width:0;}
+.q-type{font-size:10px;color:var(--muted);letter-spacing:.05em;text-transform:uppercase;margin-bottom:2px;}
+.q-prev{font-size:12px;color:var(--text);line-height:1.5;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
+.q-tags{display:flex;flex-wrap:wrap;gap:3px;margin-top:4px;}
+.q-tags span{font-size:9px;padding:2px 7px;border-radius:10px;background:rgba(0,200,255,.07);color:var(--cyan);border:1px solid rgba(0,200,255,.14);font-family:'Fira Code',monospace;}
+.q-time{font-size:10px;color:var(--cyan);font-family:'Fira Code',monospace;margin-top:4px;}
+.q-acts{display:flex;flex-direction:column;gap:5px;flex-shrink:0;}
+.q-btn{background:none;border:none;cursor:pointer;font-size:15px;padding:2px 4px;border-radius:4px;line-height:1;}
+.q-btn:hover{background:rgba(255,255,255,.05);}
+.q-empty{text-align:center;color:var(--muted);font-size:12px;padding:24px;}
+
+.h-list{display:flex;flex-direction:column;gap:7px;max-height:260px;overflow-y:auto;}
+.h-list::-webkit-scrollbar{width:3px;}
+.h-list::-webkit-scrollbar-thumb{background:var(--border);}
+.h-item{background:#070b15;border:1px solid var(--border);border-radius:6px;padding:9px 13px;display:flex;gap:9px;align-items:center;}
+.hbdg{font-size:9px;padding:2px 7px;border-radius:10px;white-space:nowrap;flex-shrink:0;}
+.htxt{font-size:11px;color:var(--muted);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.htime{font-size:10px;color:var(--muted);white-space:nowrap;flex-shrink:0;}
+.hcopy{background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px;flex-shrink:0;}
+.hcopy:hover{color:var(--cyan);}
+
+.cf-list{display:flex;flex-direction:column;gap:8px;max-height:240px;overflow-y:auto;margin-bottom:12px;}
+.cf-item{background:#070b15;border:1px solid var(--border);border-radius:8px;padding:11px 13px;}
+.cf-name{font-size:13px;font-weight:600;color:var(--white);}
+.cf-occ{font-size:11px;color:var(--cyan);}
+.cf-note{font-size:11px;color:var(--muted);margin-top:2px;}
+.cf-acts{display:flex;gap:6px;margin-top:8px;}
+.cfb{font-size:10px;padding:4px 10px;border-radius:4px;cursor:pointer;font-family:'Space Grotesk',sans-serif;transition:all .15s;}
+.cfb-g{background:rgba(0,200,255,.1);color:var(--cyan);border:1px solid rgba(0,200,255,.2)!important;}
+.cfb-g:hover{background:rgba(0,200,255,.2);}
+.cfb-d{background:transparent;color:var(--muted);border:1px solid transparent!important;}
+.cfb-d:hover{color:var(--red);}
+.cf-form{background:#070b15;border:1px solid var(--border);border-radius:8px;padding:12px 14px;margin-bottom:10px;display:none;}
+.cf-form h4{font-size:10px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:9px;}
+.cf-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:7px;}
+.sep{height:1px;background:linear-gradient(90deg,transparent,var(--border),transparent);margin:14px 0;}
+
+#toast-c{position:fixed;bottom:20px;right:16px;z-index:9999;display:flex;flex-direction:column;gap:7px;pointer-events:none;}
+.ti{background:#0c1220;border:1px solid var(--border);border-radius:8px;padding:10px 16px;font-size:12px;color:var(--white);box-shadow:0 6px 24px rgba(0,0,0,.5);animation:tIn .25s ease;display:flex;align-items:center;gap:8px;max-width:290px;pointer-events:auto;}
+.ti.ok{border-color:rgba(0,230,118,.3);color:var(--green);}
+.ti.er{border-color:rgba(255,23,68,.3);color:var(--red);}
+.ti.in{border-color:rgba(0,200,255,.3);color:var(--cyan);}
+@keyframes tIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.6;}}
+
+/* Console LinkedIn */
+.li-console{background:var(--card);border:1px solid var(--border);border-radius:12px;margin-bottom:20px;overflow:hidden;}
+.li-head{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none;}
+.li-head h2{font-size:13px;font-weight:600;color:var(--white);flex:1;}
+.li-logo{width:20px;height:20px;background:var(--li);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0;}
+.li-body{padding:18px 20px;display:none;}
+.li-body.open{display:block;}
+.li-tab-row{display:flex;gap:6px;margin-bottom:12px;border-bottom:1px solid var(--border);padding-bottom:10px;flex-wrap:wrap;}
+.li-tab{padding:5px 12px;border-radius:6px;font-size:11px;cursor:pointer;border:none;background:transparent;color:var(--muted);font-family:'Space Grotesk',sans-serif;transition:all .15s;}
+.li-tab.act{background:rgba(10,102,194,.15);color:var(--cyan);border:1px solid rgba(0,200,255,.2)!important;}
+.feed-list{display:flex;flex-direction:column;gap:8px;max-height:300px;overflow-y:auto;margin-bottom:12px;}
+.feed-list::-webkit-scrollbar{width:3px;}
+.feed-list::-webkit-scrollbar-thumb{background:var(--border);}
+.feed-item{background:#070b15;border:1px solid var(--border);border-radius:8px;padding:11px 13px;display:flex;gap:10px;align-items:flex-start;}
+.fi-av{width:28px;height:28px;border-radius:50%;background:rgba(10,102,194,.3);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--cyan);font-weight:700;flex-shrink:0;}
+.fi-body{flex:1;min-width:0;}
+.fi-name{font-size:12px;font-weight:600;color:var(--white);}
+.fi-event{font-size:11px;color:var(--cyan);margin-bottom:3px;}
+.fi-text{font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
+.fi-acts{display:flex;flex-direction:column;gap:5px;flex-shrink:0;}
+.fi-btn{font-size:10px;padding:4px 9px;border-radius:4px;cursor:pointer;border:none;font-family:'Space Grotesk',sans-serif;transition:all .15s;white-space:nowrap;}
+.fi-gen{background:rgba(0,200,255,.1);color:var(--cyan);border:1px solid rgba(0,200,255,.2)!important;}
+.fi-gen:hover{background:rgba(0,200,255,.2);}
+.li-profile{display:flex;align-items:center;gap:12px;padding:10px 14px;background:#060a12;border:1px solid rgba(0,230,118,.2);border-radius:8px;margin-bottom:12px;}
+.li-pav{width:34px;height:34px;border-radius:50%;background:var(--grad);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0;}
+.li-pname{font-size:13px;font-weight:600;color:var(--white);}
+.li-ptitle{font-size:11px;color:var(--muted);}
+.li-login{padding:4px 0;}
+.li-info{background:#060a12;border:1px solid rgba(0,200,255,.15);border-radius:8px;padding:10px 14px;font-size:11px;color:var(--muted);line-height:1.7;margin-bottom:12px;}
+</style>
+</head>
+<body>
+<canvas id="bg-cv"></canvas>
+<div id="toast-c"></div>
+<div class="app">
+
+<!-- HEADER -->
+<div class="hdr">
+  <div class="av">SJ</div>
+  <div class="hdr-info">
+    <h1>LinkedIn Bot — Simon JUTGÉ</h1>
+    <p>Cybersécurité · Auto-publication 48h · 100% gratuit</p>
+  </div>
+  <div class="hdr-right">
+    <span class="free-badge">✓ Gratuit</span>
+    <span class="svbdg" id="sv-bdg">💾 Sauvegardé</span>
+    <div class="dot-st"><div class="dot g"></div><span id="st-txt">Prêt</span></div>
+  </div>
+</div>
+
+<!-- STATS -->
+<div class="stats">
+  <div class="stat"><div class="stat-v" id="st-total">0</div><div class="stat-l">Générés</div></div>
+  <div class="stat"><div class="stat-v" id="st-queue">0</div><div class="stat-l">En file</div></div>
+  <div class="stat"><div class="stat-v" id="st-sent">0</div><div class="stat-l">Publiés</div></div>
+  <div class="stat"><div class="stat-v" id="st-nxt">—</div><div class="stat-l">Prochain</div></div>
+</div>
+
+<!-- TIMER -->
+<div class="timer">
+  <div>
+    <div class="t-lbl">⏱ Prochain post dans</div>
+    <div class="t-disp" id="t-disp">48:00:00</div>
+    <div class="t-next">Suivant : <b id="t-nxt-type">—</b></div>
+  </div>
+  <div class="t-btns">
+    <button class="tbtn tb-go" onclick="startTimer()">▶ Start</button>
+    <button class="tbtn tb-pause" onclick="pauseTimer()">⏸ Pause</button>
+    <button class="tbtn tb-reset" onclick="resetTimer()">↺ Reset</button>
+  </div>
+</div>
+
+<!-- CONSOLE LINKEDIN -->
+<div class="li-console">
+  <div class="li-head" onclick="toggleLi()">
+    <div class="li-logo">in</div>
+    <h2>Console LinkedIn — Actualités & Réseau</h2>
+    <span id="li-badge" style="font-size:11px;color:var(--muted)">Ouvrir ▾</span>
+  </div>
+  <div class="li-body" id="li-body">
+    <div class="li-info">
+      📡 Actualités cybersécurité et suggestions de félicitations — clique sur un item pour pré-remplir le générateur automatiquement.
+    </div>
+    <div class="li-tab-row">
+      <button class="li-tab act" onclick="showTab('actu',this)">📰 Actualités cyber</button>
+      <button class="li-tab" onclick="showTab('feli',this)">🎉 À féliciter</button>
+      <button class="li-tab" onclick="showTab('repost',this)">🔁 Posts populaires</button>
+    </div>
+    <div id="tab-actu"><div class="feed-list" id="actu-list"></div></div>
+    <div id="tab-feli" style="display:none"><div class="feed-list" id="feli-list"></div></div>
+    <div id="tab-repost" style="display:none"><div class="feed-list" id="repost-list"></div></div>
+  </div>
+</div>
+
+<div class="grid">
+
+<!-- GÉNÉRATEUR -->
+<div class="card">
+  <div class="card-h"><span>✍️</span><h2>Générer un post</h2><span class="bdg b-blue">JS Gratuit</span></div>
+  <div class="card-b">
+    <div class="type-grid">
+      <button class="tbtype act" data-t="original" onclick="selType(this)"><span class="ttico">🛡️</span>Original<br>Cyber</button>
+      <button class="tbtype" data-t="repost" onclick="selType(this)"><span class="ttico">🔁</span>Republier<br>& Commenter</button>
+      <button class="tbtype" data-t="congrats" onclick="selType(this)"><span class="ttico">🎉</span>Félicita-<br>tions</button>
+    </div>
+
+    <div id="s-orig">
+      <div class="fld"><label>Thème</label></div>
+      <div class="topics">
+        <button class="topic sel" onclick="selTopic(this)">Pentest</button>
+        <button class="topic" onclick="selTopic(this)">SOC</button>
+        <button class="topic" onclick="selTopic(this)">OSINT</button>
+        <button class="topic" onclick="selTopic(this)">Ransomware</button>
+        <button class="topic" onclick="selTopic(this)">Zero Day</button>
+        <button class="topic" onclick="selTopic(this)">Phishing</button>
+        <button class="topic" onclick="selTopic(this)">CTF</button>
+        <button class="topic" onclick="selTopic(this)">SIEM</button>
+        <button class="topic" onclick="selTopic(this)">Cloud Security</button>
+        <button class="topic" onclick="selTopic(this)">Bug Bounty</button>
+        <button class="topic" onclick="selTopic(this)">Cryptographie</button>
+        <button class="topic" onclick="selTopic(this)">RGPD</button>
+      </div>
+    </div>
+
+    <div id="s-repost" style="display:none">
+      <div class="fld"><label>Post original à republier</label>
+        <textarea id="rp-txt" placeholder="Colle ici le contenu du post LinkedIn à republier…"></textarea>
+      </div>
+    </div>
+
+    <div id="s-congrats" style="display:none">
+      <div class="fld"><label>Qui féliciter ?</label>
+        <input id="cw-who" placeholder="Ex: Marie Dupont — nouveau poste RSSI chez Orange"/>
+      </div>
+      <div class="fld"><label>Occasion</label>
+        <select id="cw-occ">
+          <option value="promotion">Promotion / Nouveau poste</option>
+          <option value="certification">Certification obtenue</option>
+          <option value="diplome">Diplôme / Formation</option>
+          <option value="alternance">Contrat d'alternance</option>
+          <option value="projet">Lancement projet</option>
+          <option value="anniversaire">Anniversaire professionnel</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="fld"><label>Ton</label>
+      <select id="tone-sel">
+        <option value="pj">Professionnel & Jeune</option>
+        <option value="expert">Expert technique</option>
+        <option value="story">Storytelling</option>
+        <option value="question">Question / Engagement</option>
+        <option value="liste">Liste de conseils</option>
+        <option value="alerte">Alerte / Actualité</option>
+      </select>
+    </div>
+    <div class="fld"><label>Angle / détails (optionnel)</label>
+      <textarea id="ctx-inp" placeholder="Ex: parle de ta progression TryHackMe, d'une actualité précise…" style="min-height:52px"></textarea>
+    </div>
+
+    <button class="btn btn-p" id="gen-btn-wrap" onclick="generatePost_action()">⚡ Générer le post</button>
+
+    <div class="post-wrap" id="post-wrap">
+      <div class="post-out" id="post-out"></div>
+      <div class="ht-bar" id="ht-bar"></div>
+      <div class="post-meta">
+        <span id="pm-chars"></span>
+        <span style="color:var(--muted)">💡 Clic sur un # pour copier</span>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-c" onclick="copyPost()">📋 Copier</button>
+        <button class="btn btn-s" onclick="schedulePost()">⏰ Programmer</button>
+        <a href="https://www.linkedin.com/in/simon-jutg%C3%A9-4b60bb38a" target="_blank" class="btn btn-li">💼 LinkedIn</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FILE D'ATTENTE -->
+<div class="card">
+  <div class="card-h"><span>📅</span><h2>File de publication</h2><span class="bdg b-orange" id="q-bdg">0 posts</span></div>
+  <div class="card-b">
+    <div class="q-list" id="q-list"><div class="q-empty">Aucun post programmé.</div></div>
+    <div class="sep"></div>
+    <button class="btn btn-p" style="font-size:12px;padding:9px" onclick="autoGenQueue()">
+      🤖 Planning automatique 7 posts
+    </button>
+  </div>
+</div>
+
+<!-- HISTORIQUE -->
+<div class="card full">
+  <div class="card-h">
+    <span>📜</span><h2>Historique</h2>
+    <span class="bdg b-green" id="h-bdg">0</span>
+    <button onclick="clearHistory()" style="margin-left:auto;background:rgba(255,23,68,.1);color:var(--red);border:1px solid rgba(255,23,68,.2);border-radius:6px;padding:4px 11px;font-size:11px;cursor:pointer;font-family:'Space Grotesk',sans-serif;">Vider</button>
+  </div>
+  <div class="card-b">
+    <div class="h-list" id="h-list">
+      <div style="text-align:center;color:var(--muted);font-size:12px;padding:14px">Aucun post sauvegardé.</div>
+    </div>
+  </div>
+</div>
+
+<!-- FÉLICITATIONS -->
+<div class="card full">
+  <div class="card-h">
+    <span>🎉</span><h2>Réseau — Félicitations</h2>
+    <span class="bdg b-green" id="cf-bdg">0</span>
+    <button onclick="toggleCfForm()" style="margin-left:auto;background:rgba(0,200,255,.08);color:var(--cyan);border:1px solid rgba(0,200,255,.2);border-radius:6px;padding:4px 11px;font-size:11px;cursor:pointer;font-family:'Space Grotesk',sans-serif;">+ Ajouter</button>
+  </div>
+  <div class="card-b">
+    <div class="cf-form" id="cf-form">
+      <h4>// Nouvelle personne</h4>
+      <div class="cf-row">
+        <div class="fld" style="margin:0"><label>Prénom Nom</label><input id="cf-name" placeholder="Marie Dupont"/></div>
+        <div class="fld" style="margin:0"><label>Occasion</label>
+          <select id="cf-occ-sel">
+            <option value="promotion">Promotion / Poste</option>
+            <option value="certification">Certification</option>
+            <option value="diplome">Diplôme</option>
+            <option value="alternance">Alternance</option>
+            <option value="projet">Projet</option>
+            <option value="anniversaire">Anniversaire pro</option>
+          </select>
+        </div>
+      </div>
+      <div class="fld" style="margin-bottom:10px"><label>Détails</label><input id="cf-note-inp" placeholder="Ex: OSCP obtenu, poste RSSI chez Orange…"/></div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-p" style="font-size:12px;padding:9px" onclick="addCf()">Ajouter</button>
+        <button onclick="toggleCfForm()" style="background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:6px;padding:9px 14px;font-size:12px;cursor:pointer;font-family:'Space Grotesk',sans-serif;">Annuler</button>
+      </div>
+    </div>
+    <div class="cf-list" id="cf-list">
+      <div style="text-align:center;color:var(--muted);font-size:12px;padding:14px">Ajoute des personnes à féliciter.</div>
+    </div>
+    <div class="sep"></div>
+    <button class="btn btn-p" style="font-size:12px;padding:9px" onclick="genAllCf()">
+      🎉 Générer + programmer tous les posts de félicitations
+    </button>
+  </div>
+</div>
+
+</div>
+<p style="text-align:center;font-size:11px;color:var(--muted);padding-bottom:8px">
+  GitHub Pages : <code style="color:var(--cyan)">nicolasjutge.github.io/li-bot</code> — upload ce fichier comme <code>index.html</code>
+</p>
+</div>
+
+<script>
+/* ══ PROFIL ══ */
+const P = { name:'Simon JUTGÉ', age:17, school:'Terminale STI2D · SIN', city:'Rennes', goal:'alternance cybersécurité 2027', path:'BTS → Bachelor → Master' };
+const TYPE_L = { original:'🛡️ Cyber', repost:'🔁 Repost', congrats:'🎉 Félicitations' };
+const OCC_L  = { promotion:'promotion / nouveau poste', certification:'certification obtenue', diplome:'diplôme', alternance:'alternance signée', projet:'lancement projet', anniversaire:'anniversaire professionnel' };
+
+/* ══ STORAGE ══ */
+const SK = { q:'sj3_q', h:'sj3_h', cf:'sj3_cf', st:'sj3_st' };
+const lsS = (k,v)=>{ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} };
+const lsL = (k,d)=>{ try{ const v=localStorage.getItem(k); return v?JSON.parse(v):d; }catch(e){ return d; } };
+
+/* ══ STATE ══ */
+let S = {
+  type:'original', topic:'Pentest',
+  queue:   lsL(SK.q,[]).filter(q=>q.text && !q.text.startsWith('[Err')),
+  history: lsL(SK.h,[]),
+  cf:      lsL(SK.cf,[]),
+  stats:   lsL(SK.st,{total:0,sent:0}),
+  lastPost:null, timerRunning:false, timerInterval:null
+};
+
+/* ══ CANVAS ══ */
+(function(){
+  const cv=document.getElementById('bg-cv'),cx=cv.getContext('2d');
+  let W,H,ns=[];
+  function rsz(){ W=cv.width=innerWidth; H=cv.height=innerHeight; }
+  class N{ constructor(){ this.reset(); } reset(){ this.x=Math.random()*W; this.y=Math.random()*H; this.vx=(Math.random()-.5)*.25; this.vy=(Math.random()-.5)*.25; this.r=1+Math.random()*1.5; } upd(){ this.x+=this.vx; this.y+=this.vy; if(this.x<0||this.x>W)this.vx*=-1; if(this.y<0||this.y>H)this.vy*=-1; } }
+  function init(){ rsz(); ns=[]; for(let i=0;i<45;i++)ns.push(new N()); }
+  function draw(){ cx.clearRect(0,0,W,H); ns.forEach(n=>n.upd()); for(let i=0;i<ns.length;i++)for(let j=i+1;j<ns.length;j++){ const dx=ns[i].x-ns[j].x,dy=ns[i].y-ns[j].y,d=Math.sqrt(dx*dx+dy*dy); if(d<110){ cx.globalAlpha=(1-d/110)*.22; cx.strokeStyle='#0a66c2'; cx.lineWidth=.5; cx.beginPath(); cx.moveTo(ns[i].x,ns[i].y); cx.lineTo(ns[j].x,ns[j].y); cx.stroke(); } } ns.forEach(n=>{ cx.globalAlpha=.3; cx.beginPath(); cx.arc(n.x,n.y,n.r,0,Math.PI*2); cx.fillStyle='#00c8ff'; cx.fill(); }); cx.globalAlpha=1; requestAnimationFrame(draw); }
+  window.addEventListener('resize',init); init(); draw();
+})();
+
+/* ══ HELPERS UI ══ */
+function selType(btn){ document.querySelectorAll('.tbtype').forEach(b=>b.classList.remove('act')); btn.classList.add('act'); S.type=btn.dataset.t; document.getElementById('s-orig').style.display=S.type==='original'?'block':'none'; document.getElementById('s-repost').style.display=S.type==='repost'?'block':'none'; document.getElementById('s-congrats').style.display=S.type==='congrats'?'block':'none'; }
+function selTopic(btn){ document.querySelectorAll('.topic').forEach(b=>b.classList.remove('sel')); btn.classList.add('sel'); S.topic=btn.textContent; }
+function toast(msg,t='in'){ const c=document.getElementById('toast-c'),el=document.createElement('div'); el.className='ti '+(t==='ok'?'ok':t==='er'?'er':'in'); el.textContent=(t==='ok'?'✓ ':t==='er'?'✕ ':'ℹ ')+msg; c.appendChild(el); setTimeout(()=>el.remove(),3500); }
+function saveAll(){ lsS(SK.q,S.queue); lsS(SK.h,S.history); lsS(SK.cf,S.cf); lsS(SK.st,S.stats); const b=document.getElementById('sv-bdg'); b.textContent='💾 Sauvegardé'; b.style.color='var(--green)'; setTimeout(()=>b.style.color='',1500); }
+function fmtDiff(ms){ if(ms<=0)return'maintenant'; const h=Math.floor(ms/3600000),m=Math.floor((ms%3600000)/60000); return h>0?h+'h '+m+'m':m+'m'; }
+function pad(n){ return String(n).padStart(2,'0'); }
+function updateStats(){ document.getElementById('st-total').textContent=S.stats.total; document.getElementById('st-queue').textContent=S.queue.length; document.getElementById('st-sent').textContent=S.stats.sent; }
+
+/* ══ MOTEUR DE GÉNÉRATION JS ══ */
+
+// Données par thème
+const THEMES = {
+  'Pentest': {
+    accroches: [
+      "Le pentest, c'est penser comme un attaquant pour mieux défendre.",
+      "J'ai passé la semaine à simuler des attaques sur mon lab perso. Voici ce que j'ai appris.",
+      "On parle souvent de sécurité défensive. Mais sans comprendre l'attaque, on défend à l'aveugle."
+    ],
+    corps: [
+      `Sur TryHackMe, j'ai récemment terminé un parcours complet de pentest réseau. Ce qui m'a frappé, c'est à quel point les vulnérabilités les plus critiques sont souvent les plus simples à exploiter : mots de passe par défaut, ports exposés, services non patchés.
+
+Le pentest ce n'est pas du hacking hollywoodien. C'est une méthodologie rigoureuse : reconnaissance, scan, exploitation, élévation de privilèges, rapport. Chaque étape compte.
+
+Ce que j'ai compris en pratiquant : la meilleure défense, c'est de comprendre comment on attaque. Un administrateur réseau qui n'a jamais pratiqué le pentest ne voit pas les mêmes risques qu'un attaquant.
+
+Mon objectif : décrocher une alternance en 2027 pour mettre ces compétences au service d'une vraie équipe de sécurité.`,
+      `En terminale STI2D, on aborde les réseaux et les systèmes. Mais c'est en dehors des cours que j'ai vraiment appris ce qu'est la sécurité offensive.
+
+Trois choses essentielles que le pentest m'a enseignées :
+→ Les failles techniques ne sont souvent que la porte d'entrée
+→ La reconnaissance passive est souvent plus précieuse que le scan bruyant
+→ Un rapport clair vaut autant que l'exploitation elle-même
+
+La cybersécurité offensive n'est pas une fin en soi. C'est un outil pour comprendre, corriger, et protéger.`
+    ],
+    hashtags: ['#Pentest', '#CyberSécurité', '#CyberSecurity', '#EthicalHacking', '#RedTeam', '#TryHackMe', '#Alternance', '#Cybersec']
+  },
+  'SOC': {
+    accroches: [
+      "Un SOC, c'est bien plus qu'un écran d'alertes. C'est une discipline.",
+      "La détection d'intrusion : quand chaque log peut cacher une attaque.",
+      "Travailler dans un SOC, c'est être le pompier de la cybersécurité."
+    ],
+    corps: [
+      `Le travail d'analyste SOC est souvent mal compris. On imagine des écrans qui clignotent, des alertes qui s'enchaînent. La réalité est plus nuancée — et bien plus intéressante.
+
+Un bon analyste SOC, c'est avant tout quelqu'un capable de distinguer le bruit du signal. Dans un SI actif, des milliers d'événements se produisent chaque heure. La vraie compétence, c'est de savoir lesquels méritent attention.
+
+Ce que j'explore en ce moment : la corrélation de logs avec un SIEM, la détection d'anomalies comportementales, et les playbooks de réponse à incident. Des outils que j'espère utiliser en alternance dès 2027.`,
+      `Blue Team ou Red Team ? La question revient souvent quand on parle de cybersécurité.
+
+Personnellement, ce qui m'attire dans le SOC, c'est la dimension défensive : protéger, détecter, répondre. C'est un travail d'équipe, méthodique, qui combine technique et analyse.
+
+Les outils que je pratique : Wireshark pour l'analyse réseau, les fondamentaux SIEM, les indicateurs de compromission. Chaque alerte est un puzzle à résoudre.`
+    ],
+    hashtags: ['#SOC', '#BlueTeam', '#CyberSécurité', '#CyberSecurity', '#SIEM', '#DetectionIntrusion', '#Alternance', '#Cybersec']
+  },
+  'OSINT': {
+    accroches: [
+      "Tout ce que vous publiez en ligne peut être utilisé contre vous. L'OSINT le prouve.",
+      "L'OSINT : quand l'intelligence se collecte en sources ouvertes.",
+      "Avant d'attaquer un système, on attaque l'information. C'est ça l'OSINT."
+    ],
+    corps: [
+      `L'OSINT — Open Source Intelligence — est l'une des disciplines les plus fascinantes de la cybersécurité. Et la plus sous-estimée.
+
+En quelques heures de recherche sur des sources publiques (réseaux sociaux, registres, métadonnées, moteurs spécialisés), il est possible de cartographier l'infrastructure d'une organisation, identifier ses employés, ses fournisseurs, ses technologies.
+
+Ce n'est pas de la magie. C'est de la méthode. Et ça commence par comprendre ce qu'on expose soi-même sur Internet.
+
+J'ai commencé à pratiquer via des exercices sur TryHackMe et des challenges CTF orientés OSINT. Chaque exercise m'apprend autant sur la défense que sur la collecte.`,
+      `La question que je pose souvent autour de moi : savez-vous ce qu'on peut trouver sur vous en 30 minutes de recherche ?
+
+L'OSINT n'est pas réservé aux espions ou aux hackers. C'est une compétence que tout professionnel de la sécurité doit maîtriser, que ce soit pour évaluer son exposition ou pour investiguer une menace.
+
+Outils pratiqués : Shodan, Google dorks, analyse de métadonnées, Maltego basics. Un univers de possibilités accessibles légalement.`
+    ],
+    hashtags: ['#OSINT', '#CyberSécurité', '#CyberSecurity', '#Intelligence', '#ThreatIntel', '#CTF', '#Alternance', '#Cybersec']
+  },
+  'Ransomware': {
+    accroches: [
+      "Les ransomwares ne ciblent plus seulement les grandes entreprises. La menace est partout.",
+      "2025 : les ransomwares font toujours autant de dégâts. Pourquoi ?",
+      "Une sauvegarde, c'est la seule défense garantie contre un ransomware. Vraiment ?"
+    ],
+    corps: [
+      `Le ransomware reste la menace numéro 1 pour les organisations en France en 2025. Pas parce que les techniques sont révolutionnaires, mais parce que les bases de la sécurité ne sont toujours pas appliquées.
+
+Vecteurs d'entrée les plus fréquents : phishing, VPN non patché, RDP exposé. Rien de nouveau. Pourtant les incidents se multiplient.
+
+Ce que j'apprends en étudiant ces attaques : la prévention passe par la segmentation réseau, la gestion des accès privilegiés, et surtout les sauvegardes testées régulièrement. Une sauvegarde non testée, c'est une illusion de sécurité.
+
+L'ANSSI publie des rapports détaillés sur ces campagnes — lecture obligatoire pour quiconque veut travailler en cybersécurité.`,
+      `Étudier les ransomwares, c'est comprendre que la technique n'est souvent que le dernier maillon d'une chaîne.
+
+La kill chain d'une attaque ransomware typique : phishing → accès initial → mouvement latéral → vol de données → chiffrement. Entre l'intrusion et le chiffrement, il peut se passer des semaines. Des semaines pendant lesquelles un SOC attentif peut détecter et réagir.
+
+C'est pourquoi la détection précoce est aussi importante que la prévention.`
+    ],
+    hashtags: ['#Ransomware', '#CyberSécurité', '#CyberSecurity', '#ANSSI', '#CyberThreats', '#BlueTeam', '#Alternance', '#Cybersec']
+  },
+  'CTF': {
+    accroches: [
+      "Les CTF : l'école de la cybersécurité offensive. Mon terrain d'entraînement.",
+      "Résoudre un CTF, c'est apprendre plus en une heure qu'en une semaine de cours.",
+      "Chaque flag capturé est une vulnérabilité comprise. Et une leçon retenue."
+    ],
+    corps: [
+      `Les Capture The Flag sont devenus ma façon principale d'apprendre la cybersécurité concrète. Pas de théorie abstraite : face à un système vulnérable, il faut trouver, exploiter, comprendre.
+
+Ce que j'explore en ce moment sur TryHackMe et d'autres plateformes : injections SQL, escalade de privilèges Linux, analyse de malwares, stéganographie, reverse engineering basique.
+
+Chaque challenge résolu laisse une empreinte. La prochaine fois que je verrai ce type de vulnérabilité, je la reconnaîtrai. C'est ça l'apprentissage par la pratique.
+
+Pour les jeunes qui veulent se lancer en cybersécurité : commencez par les CTF. C'est gratuit, accessible, et addictif.`,
+      `Il y a quelque chose de particulier dans la satisfaction de capturer un flag après des heures de recherche.
+
+Le CTF t'apprend une chose fondamentale : la persévérance. On échoue souvent avant de réussir. On fait des erreurs. On recommence avec une approche différente. C'est exactement ce qui forge un bon professionnel de la sécurité.
+
+Niveaux actuels : débutant/intermédiaire sur les catégories Web et Linux. Objectif 2027 : atteindre un niveau suffisant pour contribuer à des CTF d'équipe en entreprise.`
+    ],
+    hashtags: ['#CTF', '#CyberSécurité', '#CyberSecurity', '#TryHackMe', '#EthicalHacking', '#Pentest', '#Alternance', '#Cybersec']
+  },
+  'Phishing': {
+    accroches: [
+      "90% des cyberattaques commencent par un email. En 2025, le phishing n'a jamais été aussi sophistiqué.",
+      "L'IA générative a changé le phishing pour toujours. Et pas en bien.",
+      "Former les utilisateurs au phishing : nécessaire mais insuffisant. Voici pourquoi."
+    ],
+    corps: [
+      `Le phishing par IA générative est probablement la menace qui m'inquiète le plus pour les prochaines années. Les emails de phishing étaient autrefois détectables par leurs fautes d'orthographe et leur style maladroit. Ce n'est plus le cas.
+
+Aujourd'hui, un LLM peut générer en secondes un email parfaitement rédigé, contextualisé, personnalisé à partir d'informations OSINT sur la cible. Le vecteur humain reste le plus difficile à défendre.
+
+Solutions techniques : SPF, DKIM, DMARC, filtrage avancé, sandboxing des pièces jointes. Mais la vraie défense reste la sensibilisation continue des utilisateurs.`,
+      `J'ai récemment analysé des campagnes de phishing dans le cadre de mes exercices de cybersécurité. Ce qui ressort systématiquement : l'urgence artificielle et l'usurpation d'identité sont les leviers les plus efficaces.
+
+Signaux d'alerte à reconnaître : domaine légèrement modifié, demande d'action immédiate, lien qui ne correspond pas au texte affiché.
+
+La sensibilisation c'est bien, mais coupler avec des solutions techniques c'est mieux. Les deux sont indispensables.`
+    ],
+    hashtags: ['#Phishing', '#CyberSécurité', '#CyberSecurity', '#SocialEngineering', '#Sensibilisation', '#EmailSecurity', '#Alternance', '#Cybersec']
+  },
+  'SIEM': {
+    accroches: [
+      "Un SIEM sans tuning, c'est un détecteur de fumée qui sonne à chaque toast.",
+      "La corrélation de logs : l'art de trouver une aiguille dans une botte de données.",
+      "Pourquoi le SIEM reste l'outil central de tout SOC moderne."
+    ],
+    corps: [
+      `Le SIEM — Security Information and Event Management — est l'outil central de la détection en cybersécurité. Mais sa valeur dépend entièrement de la qualité de sa configuration.
+
+Un SIEM mal paramétré génère des milliers de faux positifs. Un SIEM bien tuné est un œil permanent sur l'infrastructure, capable de corréler des événements dispersés pour détecter une attaque en cours.
+
+Ce que j'apprends en pratique : la création de règles de corrélation, l'analyse des logs système et réseau, la prioritisation des alertes. Des compétences directement applicables en alternance SOC.`,
+      `La donnée brute ne dit rien. La donnée corrélée dit tout.
+
+C'est le principe fondamental du SIEM. Isolément, une connexion à 3h du matin sur un serveur n'est pas forcément suspecte. Combinée à une tentative d'élévation de privilèges et un transfert de données inhabituel, c'est une alarme rouge.
+
+Étudier le SIEM m'a appris à penser en termes de patterns, pas d'événements isolés. Une compétence que je veux mettre en pratique en entreprise dès 2027.`
+    ],
+    hashtags: ['#SIEM', '#SOC', '#CyberSécurité', '#CyberSecurity', '#BlueTeam', '#DetectionIntrusion', '#Alternance', '#Cybersec']
+  },
+  'Cloud Security': {
+    accroches: [
+      "Le cloud a déplacé le périmètre de sécurité. Et beaucoup d'entreprises ne l'ont pas encore compris.",
+      "Sécuriser le cloud : de nouveaux enjeux pour une nouvelle surface d'attaque.",
+      "IAM, CSPM, CWPP... Le vocabulaire du cloud security. Et ce qu'il cache vraiment."
+    ],
+    corps: [
+      `La migration vers le cloud a fondamentalement changé la surface d'attaque des organisations. On ne défend plus un périmètre physique, mais une infrastructure dynamique, distribuée, partiellement gérée par un tiers.
+
+Les principales problématiques cloud security : misconfiguration (le S3 bucket ouvert reste une cause d'incident très fréquente), gestion des identités et des accès, sécurité des APIs, et conformité.
+
+Le modèle de responsabilité partagée est souvent mal compris : le cloud provider sécurise l'infrastructure, mais la sécurité des données et des configurations reste la responsabilité du client.`,
+      `Ce qui me fascine dans la cloud security, c'est sa vitesse d'évolution. Les attaques ciblant les environnements cloud sont de plus en plus sophistiquées : détournement de comptes IAM, attaques sur les pipelines CI/CD, exploitation de fonctions serverless.
+
+Dans mon parcours vers l'alternance, c'est un domaine sur lequel je veux monter en compétences. Les certifications cloud security (AWS Security Specialty, Azure Security Engineer) sont très recherchées.`
+    ],
+    hashtags: ['#CloudSecurity', '#CyberSécurité', '#CyberSecurity', '#AWS', '#Azure', '#IAM', '#Alternance', '#Cybersec']
+  },
+  'Bug Bounty': {
+    accroches: [
+      "Trouver des failles légalement et être payé pour ça. C'est le bug bounty.",
+      "Le bug bounty : quand les entreprises font confiance aux hackers éthiques.",
+      "Ma première participation à un programme bug bounty. Voici ce que j'ai appris."
+    ],
+    corps: [
+      `Le bug bounty est l'un des modèles les plus fascinants de la cybersécurité collaborative. Des entreprises comme Google, Microsoft, ou des centaines de startups ouvrent leur infrastructure à des chercheurs indépendants, et récompensent la découverte de vulnérabilités.
+
+Ce que j'apprécie dans cette approche : elle aligne les intérêts. Le chercheur est récompensé pour améliorer la sécurité, pas pour exploiter les failles.
+
+Pour un étudiant en cybersécurité, les plateformes comme HackerOne ou Bugcrowd sont d'excellents terrains d'apprentissage. Les programmes avec scope ouvert permettent de s'exercer sur de vraies applications en production.`,
+      `Je m'intéresse de plus en plus au bug bounty comme complément à mes études de cybersécurité.
+
+Les compétences requises : maîtrise des vulnérabilités web (XSS, SQLi, IDOR, SSRF), bonne lecture du code source, méthodologie de test systématique, et surtout rédaction de rapports clairs.
+
+Ce dernier point est souvent négligé : un bug inutilisable faute d'un bon rapport ne vaut rien. La communication fait partie du métier.`
+    ],
+    hashtags: ['#BugBounty', '#CyberSécurité', '#CyberSecurity', '#EthicalHacking', '#HackerOne', '#Pentest', '#Alternance', '#Cybersec']
+  },
+  'Zero Day': {
+    accroches: [
+      "Un zero day : la vulnérabilité que personne ne connaît encore. Sauf l'attaquant.",
+      "Les zero days ne sont pas que dans les films. Voici ce qu'il faut savoir.",
+      "Comment se protéger d'une attaque qu'on ne peut pas anticiper ?"
+    ],
+    corps: [
+      `Un zero day désigne une vulnérabilité inconnue du vendeur du logiciel — et donc sans patch disponible. Le terme vient du fait que les défenseurs ont "zéro jour" pour se préparer une fois qu'elle est exploitée.
+
+Ces vulnérabilités sont extrêmement précieuses sur les marchés cybercriminels. Certaines se vendent plusieurs millions de dollars selon leur criticité et leur cible.
+
+La vraie leçon pour un professionnel de la sécurité : face à un zero day, c'est la défense en profondeur qui fait la différence. Segmentation réseau, principe de moindre privilège, détection comportementale. On ne peut pas patcher ce qu'on ne connaît pas, mais on peut limiter l'impact.`,
+      `Ce qui me fascine avec les zero days, c'est que leur existence questionne toute notre approche de la cybersécurité basée sur les signatures et les CVE.
+
+Un IDS qui détecte à partir de signatures connues ne verra pas un zero day. Un EDR basé sur l'analyse comportementale, si. C'est pourquoi la détection comportementale est devenue aussi critique que la prévention.
+
+Étudier les zero days, c'est comprendre les limites de nos outils actuels — et travailler à les dépasser.`
+    ],
+    hashtags: ['#ZeroDay', '#CyberSécurité', '#CyberSecurity', '#ThreatIntel', '#Vulnerability', '#CyberThreats', '#Alternance', '#Cybersec']
+  },
+  'Cryptographie': {
+    accroches: [
+      "La cryptographie est le fondement invisible de toute sécurité numérique.",
+      "HTTPS, SSH, VPN... tout repose sur la cryptographie. En comprendre les bases change tout.",
+      "Quand la cryptographie devient une arme défensive. Et offensive."
+    ],
+    corps: [
+      `La cryptographie est souvent perçue comme une matière abstraite et mathématique. En cybersécurité, c'est l'inverse : c'est la fondation concrète sur laquelle repose toute communication sécurisée.
+
+Comprendre les bases — chiffrement symétrique vs asymétrique, hachage, signatures numériques, PKI — permet de mieux appréhender pourquoi certaines configurations TLS sont dangereuses, pourquoi MD5 ne devrait plus jamais être utilisé pour stocker des mots de passe, ou comment fonctionne un VPN sous le capot.
+
+C'est une des matières où la théorie et la pratique se rejoignent directement dans le travail quotidien d'un ingénieur sécurité.`,
+      `Dans mes études de cybersécurité, la cryptographie est la matière qui m'a le plus surpris par sa profondeur.
+
+Au-delà des algorithmes, c'est la mise en œuvre qui concentre la plupart des vulnérabilités. Une implémentation incorrecte d'un algorithme solide est aussi dangereuse qu'un algorithme faible. Les bibliothèques cryptographiques, les générateurs de nombres aléatoires, la gestion des clés — chaque détail compte.`
+    ],
+    hashtags: ['#Cryptographie', '#CyberSécurité', '#CyberSecurity', '#PKI', '#TLS', '#Cryptography', '#Alternance', '#Cybersec']
+  },
+  'RGPD': {
+    accroches: [
+      "RGPD et cybersécurité : deux disciplines indissociables. Voici pourquoi.",
+      "La conformité RGPD n'est pas un frein à la sécurité. C'est un levier.",
+      "Une violation de données sans plan de réponse RGPD : double peine."
+    ],
+    corps: [
+      `Le RGPD a profondément changé la relation entre cybersécurité et protection des données. Pour un futur professionnel de la sécurité, ignorer le cadre réglementaire serait une erreur majeure.
+
+Ce que le RGPD impose concrètement en matière de sécurité : chiffrement des données personnelles, notification sous 72h en cas de violation, registre des traitements, privacy by design. Des exigences qui se traduisent directement en mesures techniques.
+
+La CNIL publie des recommandations techniques très utiles pour toute organisation traitant des données personnelles. C'est une ressource que tout ingénieur sécurité devrait connaître.`,
+      `Ce qui m'intéresse dans l'intersection RGPD / cybersécurité, c'est la dimension DPO — Data Protection Officer.
+
+Un DPO efficace doit comprendre à la fois le cadre juridique et les enjeux techniques. C'est un rôle qui valorise les profils hybrides : technique ET réglementaire. Une compétence qui se développe dès maintenant dans mon parcours.`
+    ],
+    hashtags: ['#RGPD', '#GDPR', '#CyberSécurité', '#CyberSecurity', '#Conformité', '#DataProtection', '#Alternance', '#Cybersec']
+  }
+};
+
+const REPOST_TEMPLATES = [
+  (ctx) => `Je partage ce post car il illustre parfaitement un enjeu que je suis de près dans ma formation en cybersécurité.
+
+${ctx ? 'Sur le sujet "'+ctx+'" : ' : ''}Ce qui me frappe dans ce type de contenu, c'est la façon dont il connecte la théorie avec les réalités du terrain. En tant qu'étudiant en terminale STI2D orienté cybersécurité, c'est exactement le genre de perspective qui me manque dans les cours.
+
+Ce que je retiens : la cybersécurité n'est pas qu'une affaire de technique. C'est une discipline qui demande du recul, de la pédagogie, et une capacité à vulgariser des enjeux complexes pour des publics non techniques.
+
+Est-ce que vous pensez que la sensibilisation des dirigeants à la cybersécurité est suffisante en France actuellement ?
+
+#CyberSécurité #CyberSecurity #Partage #Alternance #Cybersec`,
+
+  (ctx) => `Ce post m'a interpellé et je voulais y ajouter ma perspective d'étudiant en cybersécurité.
+
+${ctx ? 'Contexte : "'+ctx+'" — ' : ''}On parle souvent de cybersécurité comme d'un coût. Je pense qu'il faut le voir comme un investissement. Chaque euro dépensé en prévention évite potentiellement des dizaines en réponse à incident.
+
+Dans mon parcours vers l'alternance en 2027, c'est ce changement de paradigme que je veux contribuer à promouvoir : la sécurité comme valeur ajoutée, pas comme contrainte.
+
+Votre expérience : comment votre organisation positionne-t-elle le budget cybersécurité ?
+
+#CyberSécurité #CyberSecurity #ROI #Alternance #Cybersec #Partage`
+];
+
+const CONGRATS_TEMPLATES = {
+  promotion: (who, note) => `@${who} 🎉
+
+Félicitations pour cette nouvelle étape professionnelle${note ? ' — '+note : ''} !
+
+Ce type de parcours est une vraie source d'inspiration pour les étudiants en cybersécurité comme moi. Voir des professionnels progresser dans ce domaine confirme à quel point les opportunités sont réelles pour ceux qui se forment sérieusement.
+
+Bravo pour ce nouveau défi. La cybersécurité a besoin de personnes engagées à tous les niveaux.
+
+#Cybersécurité #CyberSecurity #Félicitations #Réseau #Cybersec`,
+
+  certification: (who, note) => `@${who} — Bravo pour cette certification${note ? ' : '+note : ''} ! 🏆
+
+Obtenir une certification en cybersécurité demande du travail, de la discipline, et une vraie maîtrise technique. C'est une réussite qui mérite d'être soulignée.
+
+En tant qu'étudiant qui se prépare à ce type de parcours, je mesure l'effort que ça représente. Ces certifications sont des marqueurs reconnus dans notre domaine.
+
+Inspirant — et motivant pour continuer à progresser !
+
+#Cybersécurité #CyberSecurity #Certification #Félicitations #Cybersec`,
+
+  diplome: (who, note) => `@${who} — Félicitations pour ce diplôme${note ? ' ('+note+')' : ''} ! 🎓
+
+Une nouvelle étape franchie. Dans un domaine aussi dynamique que la cybersécurité, chaque formation complétée est une compétence supplémentaire au service de la protection des systèmes et des données.
+
+Bon courage pour la suite — les opportunités sont nombreuses pour les profils formés en sécurité informatique.
+
+#Cybersécurité #CyberSecurity #Diplôme #Félicitations #Formation #Cybersec`,
+
+  alternance: (who, note) => `@${who} — Super nouvelle pour ce contrat d'alternance${note ? ' chez '+note : ''} ! 🚀
+
+L'alternance en cybersécurité, c'est la voie idéale pour allier formation et expérience concrète. Je suis exactement ce chemin pour 2027 et voir des profils similaires réussir à décrocher ces contrats est vraiment motivant.
+
+Bonne chance pour cette nouvelle aventure — profite de chaque mission pour apprendre !
+
+#Cybersécurité #CyberSecurity #Alternance #Félicitations #Cybersec`,
+
+  projet: (who, note) => `@${who} — Félicitations pour le lancement${note ? ' de '+note : ' de ce projet'} ! 💡
+
+Les initiatives dans le domaine de la cybersécurité, qu'elles soient techniques, pédagogiques ou communautaires, sont essentielles pour faire progresser notre secteur.
+
+Hâte de suivre l'évolution de ce projet. Le partage et la collaboration sont ce qui fait avancer notre communauté.
+
+#Cybersécurité #CyberSecurity #Innovation #Félicitations #Cybersec`,
+
+  anniversaire: (who, note) => `@${who} — ${note ? note+' déjà' : 'Un bel anniversaire professionnel'} dans la cybersécurité ! 🔐
+
+L'expérience acquise au fil des années dans ce domaine est précieuse et rare. La cybersécurité évolue tellement vite que chaque année passée sur le terrain représente une expertise réelle.
+
+Merci pour la contribution à notre communauté. C'est ce type de parcours qui inspire les nouvelles générations.
+
+#Cybersécurité #CyberSecurity #Anniversaire #Réseau #Cybersec`
+};
+
+/* ══ GÉNÉRATION PRINCIPALE ══ */
+function generatePost(opts={}){
+  const type    = opts.type    || S.type;
+  const topic   = opts.topic   || S.topic;
+  const tone    = opts.tone    || document.getElementById('tone-sel')?.value || 'pj';
+  const ctx     = opts.ctx     || document.getElementById('ctx-inp')?.value  || '';
+  const who     = opts.who     || document.getElementById('cw-who')?.value   || 'un contact LinkedIn';
+  const occ     = opts.occ     || document.getElementById('cw-occ')?.value   || 'promotion';
+  const rpTxt   = opts.content || document.getElementById('rp-txt')?.value   || '';
+  const note    = opts.note    || '';
+
+  let text = '';
+
+  if(type === 'original'){
+    const themeData = THEMES[topic] || THEMES['Pentest'];
+    const accroche  = pick(themeData.accroches);
+    const corps     = pick(themeData.corps);
+    const hashtags  = themeData.hashtags.join(' ');
+
+    // Adapter selon le ton
+    let intro = accroche;
+    if(tone === 'question') intro = `Question pour la communauté cybersécurité :\n\n${accroche}`;
+    if(tone === 'alerte')   intro = `🚨 ALERTE — ${accroche}`;
+    if(tone === 'story')    intro = `Il y a quelques semaines, je me suis posé une question.\n\n${accroche}`;
+
+    // Ajouter contexte utilisateur si fourni
+    const ctxPart = ctx ? `\n\n${ctx}` : '';
+
+    text = `${intro}\n\n${corps}${ctxPart}\n\n${hashtags}`;
+
+  } else if(type === 'repost'){
+    const tpl = pick(REPOST_TEMPLATES);
+    text = tpl(ctx || rpTxt.substring(0, 80));
+
+  } else if(type === 'congrats'){
+    const tpl = CONGRATS_TEMPLATES[occ] || CONGRATS_TEMPLATES.promotion;
+    text = tpl(who, note || ctx);
+  }
+
+  return text.trim();
+}
+
+function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+
+/* ══ RENDU POST ══ */
+function renderPost(text){
+  const wrap=document.getElementById('post-wrap');
+  const out=document.getElementById('post-out');
+  const hbar=document.getElementById('ht-bar');
+  const pm=document.getElementById('pm-chars');
+  wrap.style.display='block';
+  out.className='post-out';
+  const tags=[...new Set((text.match(/#[\wÀ-ÿéèêëàâîïôùûüç]+/gi)||[]))];
+  const esc=text.replace(/[<>&]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]));
+  out.innerHTML=esc.replace(/#([\wÀ-ÿéèêëàâîïôùûüç]+)/gi,'<span class="ht" onclick="copyHt(\'#$1\')">#$1</span>');
+  hbar.innerHTML=tags.length
+    ?'<span style="color:var(--muted);font-size:10px;margin-right:4px">TAGS:</span>'+tags.map(h=>`<span class="htag" onclick="copyHt('${h}')">${h}</span>`).join('')
+    :'<span style="color:var(--muted);font-size:11px">Aucun hashtag</span>';
+  const len=text.length;
+  pm.textContent=`${len} car. · ${tags.length} hashtags`;
+  pm.parentElement.className='post-meta'+(len>3000?' over':len>2500?' warn':'');
+}
+function copyHt(h){ navigator.clipboard.writeText(h).then(()=>toast('Copié : '+h,'in')); }
+
+/* Archive dans l'historique avec statut "copié" */
+function archivePost(post, source='copie'){
+  // Eviter les doublons (même id)
+  if(S.history.find(x=>x.id===post.id)) return;
+  S.history.unshift({ ...post, publishedAt:Date.now(), source });
+  S.stats.sent++;
+  saveAll(); renderHistory(); updateStats();
+}
+
+function copyPost(){
+  const text = document.getElementById('post-out').innerText||'';
+  if(!text) return;
+  navigator.clipboard.writeText(text).then(()=>{
+    toast('Post copié ! Colle dans LinkedIn 💼','ok');
+    if(S.lastPost) archivePost(S.lastPost, 'copie');
+  });
+}
+
+/* ══ ACTION GÉNÉRER ══ */
+function generatePost_action(){
+  const text = generatePost();
+  renderPost(text);
+  S.lastPost = { id:Date.now(), text, type:S.type, topic:S.topic, label:TYPE_L[S.type], ts:Date.now() };
+  S.stats.total++;
+  saveAll(); updateStats();
+  toast('Post généré ✓','ok');
+}
+
+/* ══ PROGRAMMER ══ */
+function schedulePost(){
+  if(!S.lastPost){ toast('Génère d\'abord un post','er'); return; }
+  const base=S.queue.length?Math.max(...S.queue.map(q=>q.scheduledAt)):Date.now();
+  S.queue.push({ id:Date.now(), text:S.lastPost.text, type:S.lastPost.type, topic:S.lastPost.topic, label:S.lastPost.label, scheduledAt:base+48*3600*1000 });
+  saveAll(); renderQueue(); updateStats();
+  toast('Programmé dans '+fmtDiff(base+48*3600*1000-Date.now()),'in');
+}
+
+/* ══ PLANNING AUTO 7 POSTS ══ */
+function autoGenQueue(){
+  const plans=[
+    {type:'original',topic:'Pentest',tone:'pj'},
+    {type:'congrats',who:'la communauté cybersécurité de Rennes',occ:'certification',tone:'pj'},
+    {type:'original',topic:'CTF',tone:'story'},
+    {type:'repost',content:'actualité cybersécurité France 2025',tone:'pj'},
+    {type:'original',topic:'SOC',tone:'liste'},
+    {type:'congrats',who:'mon réseau LinkedIn cybersécurité',occ:'alternance',tone:'pj'},
+    {type:'original',topic:'Bug Bounty',tone:'question'},
+  ];
+  plans.forEach((p,i)=>{
+    const text=generatePost(p);
+    const base=S.queue.length?Math.max(...S.queue.map(q=>q.scheduledAt)):Date.now();
+    S.queue.push({ id:Date.now()+i*10, text, type:p.type, topic:p.topic||p.who||'', label:TYPE_L[p.type], scheduledAt:base+48*3600*1000 });
+    S.stats.total++;
+  });
+  saveAll(); renderQueue(); updateStats();
+  toast('Planning 7 posts créé ✓','ok');
+}
+
+/* ══ RENDER QUEUE ══ */
+function renderQueue(){
+  const list=document.getElementById('q-list');
+  const badge=document.getElementById('q-bdg');
+  if(!S.queue.length){ list.innerHTML='<div class="q-empty">Aucun post programmé.</div>'; badge.textContent='0 posts'; return; }
+  badge.textContent=S.queue.length+' post'+(S.queue.length>1?'s':'');
+  list.innerHTML=S.queue.map((q,i)=>{
+    const diff=q.scheduledAt-Date.now();
+    const tstr=diff>0?'Dans '+fmtDiff(diff):'⚡ À publier maintenant';
+    const tags=(q.text.match(/#[\wÀ-ÿéèêëàâîïôùûüç]+/gi)||[]).slice(0,4);
+    return `<div class="q-item ${i===0?'nxt':''}" id="qi-${q.id}">
+      <div class="q-num">${i+1}</div>
+      <div class="q-body">
+        <div class="q-type">${q.label}</div>
+        <div class="q-prev">${q.text.substring(0,120)}…</div>
+        ${tags.length?`<div class="q-tags">${tags.map(h=>`<span>${h}</span>`).join('')}</div>`:''}
+        <div class="q-time">${tstr}</div>
+      </div>
+      <div class="q-acts">
+        <button class="q-btn" onclick="copyQ(${q.id})" title="Copier" style="color:var(--cyan)">📋</button>
+        <button class="q-btn" onclick="previewQ(${q.id})" title="Aperçu" style="color:var(--muted)">👁</button>
+        <button class="q-btn" onclick="delQ(${q.id})" title="Supprimer" style="color:var(--muted)">✕</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+function copyQ(id){
+  const q=S.queue.find(x=>x.id===id);
+  if(!q) return;
+  navigator.clipboard.writeText(q.text).then(()=>{
+    toast('Post copié ! Colle dans LinkedIn 💼','ok');
+    archivePost(q, 'copie-file');
+  });
+}
+function previewQ(id){ const q=S.queue.find(x=>x.id===id); if(!q)return; renderPost(q.text); S.lastPost=q; document.getElementById('post-wrap').scrollIntoView({behavior:'smooth',block:'nearest'}); toast('Aperçu chargé','in'); }
+function delQ(id){ S.queue=S.queue.filter(x=>x.id!==id); saveAll(); renderQueue(); updateStats(); }
+
+/* ══ TIMER ══ */
+function startTimer(){
+  if(S.timerRunning)return;
+  if(!S.queue.length){ toast('Ajoute des posts d\'abord !','er'); return; }
+  S.timerRunning=true; document.getElementById('st-txt').textContent='En cours';
+  document.getElementById('t-nxt-type').textContent=S.queue[0]?.label||'—';
+  S.timerInterval=setInterval(()=>{
+    if(!S.timerRunning)return;
+    const now=Date.now();
+    if(S.queue.length&&S.queue[0].scheduledAt<=now) publishNext();
+    if(S.queue.length){ const diff=Math.max(0,S.queue[0].scheduledAt-now); const h=Math.floor(diff/3600000),m=Math.floor((diff%3600000)/60000),s=Math.floor((diff%60000)/1000); document.getElementById('t-disp').textContent=pad(h)+':'+pad(m)+':'+pad(s); document.getElementById('st-nxt').textContent=h>0?h+'h':m>0?m+'m':s+'s'; }
+    else pauseTimer();
+  },1000);
+  toast('Timer démarré ▶','ok');
+}
+function pauseTimer(){ S.timerRunning=false; clearInterval(S.timerInterval); document.getElementById('st-txt').textContent='En pause'; }
+function resetTimer(){ pauseTimer(); document.getElementById('t-disp').textContent='48:00:00'; document.getElementById('st-txt').textContent='Prêt'; }
+function publishNext(){ const q=S.queue.shift(); if(!q)return; archivePost({...q}, 'publie'); renderQueue(); document.getElementById('t-nxt-type').textContent=S.queue[0]?.label||'—'; renderPost(q.text); S.lastPost=q; toast(`⚡ "${q.label}" prêt à publier !`,'ok'); }
+
+/* ══ HISTORIQUE ══ */
+function renderHistory(){
+  const list=document.getElementById('h-list');
+  const badge=document.getElementById('h-bdg');
+  badge.textContent=S.history.length;
+  if(!S.history.length){ list.innerHTML='<div style="text-align:center;color:var(--muted);font-size:12px;padding:14px">Aucun post archivé.</div>'; return; }
+  const cols={original:'b-blue',repost:'b-orange',congrats:'b-green'};
+  const srcLabel={
+    'copie':    '<span style="font-size:9px;padding:2px 6px;border-radius:8px;background:rgba(0,230,118,.1);color:var(--green);border:1px solid rgba(0,230,118,.2);margin-left:4px">📋 Copié</span>',
+    'copie-file':'<span style="font-size:9px;padding:2px 6px;border-radius:8px;background:rgba(0,200,255,.1);color:var(--cyan);border:1px solid rgba(0,200,255,.2);margin-left:4px">📋 File</span>',
+    'publie':   '<span style="font-size:9px;padding:2px 6px;border-radius:8px;background:rgba(255,109,0,.1);color:var(--orange);border:1px solid rgba(255,109,0,.2);margin-left:4px">⚡ Publié</span>',
+  };
+  list.innerHTML=S.history.slice(0,50).map(h=>{
+    const d=new Date(h.publishedAt||h.ts||Date.now());
+    const ts=d.toLocaleDateString('fr-FR')+' '+d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+    const src=srcLabel[h.source]||srcLabel['copie'];
+    const tags=(h.text.match(/#[\wÀ-ÿéèêëàâîïôùûüç]+/gi)||[]).slice(0,3).join(' ');
+    return `<div class="h-item" style="flex-direction:column;align-items:stretch;gap:6px;cursor:pointer;" onclick="toggleHItem(${h.id})">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span class="bdg hbdg ${cols[h.type]||'b-blue'}">${h.label}</span>
+        ${src}
+        <span class="htxt" style="flex:1">${h.text.substring(0,80)}…</span>
+        <button class="hcopy" onclick="event.stopPropagation();copyH(${h.id})" title="Copier">📋</button>
+        <button class="hcopy" onclick="event.stopPropagation();deleteH(${h.id})" title="Supprimer" style="color:rgba(255,23,68,.5)">✕</button>
+        <span class="htime">${ts}</span>
+      </div>
+      <div id="hexp-${h.id}" style="display:none;font-size:12px;color:var(--text);background:#060a12;border-radius:6px;padding:10px 12px;white-space:pre-wrap;word-break:break-word;line-height:1.7;border:1px solid var(--border)">${h.text}</div>
+      ${tags?`<div style="font-size:10px;color:var(--cyan);font-family:'Fira Code',monospace">${tags}</div>`:''}
+    </div>`;
+  }).join('');
+}
+function toggleHItem(id){ const el=document.getElementById('hexp-'+id); if(el) el.style.display=el.style.display==='none'?'block':'none'; }
+function copyH(id){ const h=S.history.find(x=>x.id===id); if(h) navigator.clipboard.writeText(h.text).then(()=>toast('Post archivé copié ✓','ok')); }
+function deleteH(id){ S.history=S.history.filter(x=>x.id!==id); saveAll(); renderHistory(); updateStats(); }
+function clearHistory(){ S.history=[]; S.stats.sent=0; saveAll(); renderHistory(); updateStats(); }
+
+/* ══ FÉLICITATIONS ══ */
+function toggleCfForm(){ const f=document.getElementById('cf-form'); f.style.display=f.style.display==='block'?'none':'block'; }
+function addCf(){ const name=document.getElementById('cf-name').value.trim(); if(!name){ toast('Saisis un nom','er'); return; } const occ=document.getElementById('cf-occ-sel').value; const note=document.getElementById('cf-note-inp').value.trim(); S.cf.push({id:Date.now(),name,occ,note}); document.getElementById('cf-name').value=''; document.getElementById('cf-note-inp').value=''; document.getElementById('cf-form').style.display='none'; saveAll(); renderCf(); toast(name+' ajouté(e) 🎉','ok'); }
+function renderCf(){
+  const list=document.getElementById('cf-list'); const badge=document.getElementById('cf-bdg'); badge.textContent=S.cf.length;
+  const occL={promotion:'Promotion',certification:'Certification',diplome:'Diplôme',alternance:'Alternance',projet:'Projet',anniversaire:'Anniversaire pro'};
+  if(!S.cf.length){ list.innerHTML='<div style="text-align:center;color:var(--muted);font-size:12px;padding:14px">Ajoute des personnes à féliciter.</div>'; return; }
+  list.innerHTML=S.cf.map(c=>`<div class="cf-item"><div class="cf-name">${c.name}</div><div class="cf-occ">🎉 ${occL[c.occ]||c.occ}</div>${c.note?`<div class="cf-note">${c.note}</div>`:''}<div class="cf-acts"><button class="cfb cfb-g" onclick="genOneCf(${c.id})">⚡ Générer</button><button class="cfb cfb-d" onclick="delCf(${c.id})">✕</button></div></div>`).join('');
+}
+function delCf(id){ S.cf=S.cf.filter(x=>x.id!==id); saveAll(); renderCf(); }
+function genOneCf(id){
+  const c=S.cf.find(x=>x.id===id); if(!c)return;
+  const text=generatePost({type:'congrats',who:c.name,occ:c.occ,note:c.note,ctx:c.note});
+  renderPost(text);
+  S.lastPost={id:Date.now(),text,type:'congrats',topic:c.name,label:'🎉 Félicitations',ts:Date.now()};
+  S.stats.total++; saveAll(); updateStats();
+  toast('Post pour '+c.name+' généré ✓','ok');
+  document.getElementById('post-wrap').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+function genAllCf(){
+  if(!S.cf.length){ toast('Aucune personne','er'); return; }
+  S.cf.forEach(c=>{
+    const text=generatePost({type:'congrats',who:c.name,occ:c.occ,note:c.note,ctx:c.note});
+    const base=S.queue.length?Math.max(...S.queue.map(q=>q.scheduledAt)):Date.now();
+    S.queue.push({id:Date.now()+Math.random()*1000,text,type:'congrats',topic:c.name,label:'🎉 Félicitations',scheduledAt:base+48*3600*1000});
+    S.stats.total++;
+  });
+  saveAll(); renderQueue(); updateStats();
+  toast('Tous les posts générés et programmés !','ok');
+}
+
+/* ══ CONSOLE LINKEDIN (données statiques) ══ */
+const ACTU=[
+  {src:'CERT-FR',titre:'Campagne active de phishing ciblant les TPE/PME françaises',detail:'Vague de spear-phishing utilisant des deepfakes vocaux pour usurper l\'identité de dirigeants.',type:'alerte'},
+  {src:'ANSSI',titre:'Rapport 2025 : ransomwares en hausse de 30% en France',detail:'Les PME et collectivités locales restent les cibles principales. Plan de remédiation national lancé.',type:'rapport'},
+  {src:'TryHackMe',titre:'TryHackMe dépasse 3M d\'utilisateurs — nouveaux parcours SOC disponibles',detail:'La plateforme lance des parcours certifiants en partenariat avec des entreprises françaises.',type:'actu'},
+  {src:'CNIL',titre:'Nouvelles recommandations CNIL sur la sécurité des données de santé',detail:'Chiffrement obligatoire pour toute donnée de santé stockée ou transmise.',type:'rapport'},
+  {src:'Google Security',titre:'Chrome corrige un 0-day critique exploité in the wild',detail:'Mise à jour d\'urgence recommandée. Faille dans le moteur V8 permettant une échappée sandbox.',type:'alerte'},
+  {src:'ZATAZ',titre:'Fuite de données : 2 millions de comptes français exposés',detail:'Une base de données mal configurée expose emails, noms et numéros de téléphone de citoyens français.',type:'alerte'},
+  {src:'HackTheBox',titre:'Top 10 des techniques d\'élévation de privilèges Linux en 2025',detail:'Analyse des vecteurs les plus exploités en pentest et CTF cette année.',type:'article'},
+];
+const FELI=[
+  {name:'Sophie Martin',event:'Certification CEH obtenue',occ:'certification',detail:'Après 6 mois de préparation intensive.'},
+  {name:'Lucas Bernard',event:'Analyste SOC chez Orange Cyberdefense',occ:'promotion',detail:'Premier poste après son BTS SIO.'},
+  {name:'Emma Rousseau',event:'Bachelor Cybersécurité — École 2600 Rennes',occ:'diplome',detail:'Major de promotion, spécialisation Pentest.'},
+  {name:'Théo Lefebvre',event:'Alternance Pentesteur junior — Capgemini',occ:'alternance',detail:'2 ans en BTS SIO SISR.'},
+  {name:'Camille Dubois',event:'Lancement blog RedTeam Breizh',occ:'projet',detail:'Tutoriels CTF pour la communauté bretonne.'},
+];
+const RPOSTS=[
+  {name:'Florian Rault',titre:'Pourquoi chaque dev devrait apprendre les bases du pentest',preview:'3 ans à coder sans comprendre comment mes apps pouvaient être attaquées...',likes:'847'},
+  {name:'ANSSI France',titre:'Guide d\'hygiène informatique — 42 mesures essentielles 2025',preview:'Notre guide référence vient d\'être mis à jour avec 8 nouvelles recommandations cloud et IA...',likes:'3.4k'},
+  {name:'Marie-Claire Bouvet',titre:'Top 5 certifications cyber les plus valorisées en France',preview:'Après OSCP, CEH et Security+, mon retour d\'expérience honnête...',likes:'1.2k'},
+  {name:'Matthieu Garin',titre:'Alternance cybersécurité : comment décrocher son contrat en 2027',preview:'J\'ai accompagné 40 étudiants cette année. Voici ce qui fait la différence...',likes:'2.3k'},
+];
+
+function toggleLi(){ const b=document.getElementById('li-body'); const open=b.classList.toggle('open'); document.getElementById('li-badge').textContent=open?'Fermer ▴':'Ouvrir ▾'; if(open) renderFeed('actu'); }
+function showTab(tab,btn){ document.querySelectorAll('.li-tab').forEach(b=>b.classList.remove('act')); btn.classList.add('act'); ['actu','feli','repost'].forEach(t=>document.getElementById('tab-'+t).style.display=t===tab?'block':'none'); renderFeed(tab); }
+function renderFeed(tab){
+  if(tab==='actu'){
+    document.getElementById('actu-list').innerHTML=ACTU.map((a,i)=>`<div class="feed-item"><div class="fi-av">${a.src.substring(0,2)}</div><div class="fi-body"><div class="fi-name">${a.src}</div><div class="fi-event" style="color:var(--orange)">${a.titre}</div><div class="fi-text">${a.detail}</div></div><div class="fi-acts"><button class="fi-btn fi-gen" onclick="useActu(${i})">✍️ Post</button><button class="fi-btn fi-gen" onclick="useActuRp(${i})" style="background:rgba(255,109,0,.1);color:var(--orange)">🔁 Repost</button></div></div>`).join('');
+  } else if(tab==='feli'){
+    document.getElementById('feli-list').innerHTML=FELI.map((f,i)=>`<div class="feed-item"><div class="fi-av">${f.name.split(' ').map(w=>w[0]).join('').substring(0,2)}</div><div class="fi-body"><div class="fi-name">${f.name}</div><div class="fi-event">🎉 ${f.event}</div><div class="fi-text">${f.detail}</div></div><div class="fi-acts"><button class="fi-btn fi-gen" onclick="useFeli(${i})">🎉 Féliciter</button></div></div>`).join('');
+  } else {
+    document.getElementById('repost-list').innerHTML=RPOSTS.map((r,i)=>`<div class="feed-item"><div class="fi-av">${r.name.split(' ').map(w=>w[0]).join('').substring(0,2)}</div><div class="fi-body"><div class="fi-name">${r.name} · <span style="color:var(--muted)">${r.likes} likes</span></div><div class="fi-event" style="color:var(--white)">${r.titre}</div><div class="fi-text">${r.preview}</div></div><div class="fi-acts"><button class="fi-btn fi-gen" onclick="useRepost(${i})">🔁 Commenter</button></div></div>`).join('');
+  }
+}
+function closeLi(){ document.getElementById('li-body').classList.remove('open'); document.getElementById('li-badge').textContent='Ouvrir ▾'; }
+function useActu(i){ const a=ACTU[i]; document.querySelector('[data-t="original"]').click(); document.getElementById('ctx-inp').value='Parle de cette actualité : "'+a.titre+'" — '+a.detail; closeLi(); document.getElementById('gen-btn-wrap').scrollIntoView({behavior:'smooth',block:'nearest'}); toast('Contexte pré-rempli','in'); }
+function useActuRp(i){ const a=ACTU[i]; document.querySelector('[data-t="repost"]').click(); document.getElementById('rp-txt').value=a.titre+' — Source: '+a.src+'\n\n'+a.detail; closeLi(); toast('Post pré-rempli pour republication','in'); }
+function useFeli(i){ const f=FELI[i]; document.querySelector('[data-t="congrats"]').click(); document.getElementById('cw-who').value=f.name+' — '+f.detail; document.getElementById('cw-occ').value=f.occ; closeLi(); toast('Félicitations pré-remplies','in'); }
+function useRepost(i){ const r=RPOSTS[i]; document.querySelector('[data-t="repost"]').click(); document.getElementById('rp-txt').value=r.titre+'\n\n'+r.preview; closeLi(); toast('Post chargé pour republication','in'); }
+
+/* ══ INIT ══ */
+updateStats(); renderQueue(); renderHistory(); renderCf();
+</script>
+</body>
+</html>
