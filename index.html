@@ -295,10 +295,29 @@ body{background:var(--bg);color:var(--text);font-family:'Space Grotesk',sans-ser
       <button class="btn btn-c" onclick="pushSync()">⬆️ Envoyer</button>
     </div>
     <div id="sy-st" style="margin-top:10px;font-size:11px;color:var(--muted)">Pas encore synchronisé</div>
+    <div class="sep"></div>
+    <div class="liinf">💾 Sauvegarde locale indépendante du cloud — utile en secours, ou pour transférer manuellement entre deux appareils sans passer par GitHub.</div>
+    <div class="btn-row">
+      <button class="btn btn-p" onclick="downloadBackup()">📥 Télécharger une sauvegarde</button>
+      <label class="btn btn-c" style="cursor:pointer">📤 Importer une sauvegarde<input type="file" accept="application/json,.json" style="display:none" onchange="importBackupFile(this)"></label>
+    </div>
+  </div>
+</div>
+
+<div class="lic">
+  <div class="lih" onclick="toggleRJ()">
+    <div class="lilo" style="background:var(--orange)">🗑️</div>
+    <h2>Posts mis de côté <span id="rj-count" style="font-size:11px;color:var(--muted)">(0)</span></h2>
+    <span id="rj-bdg" style="font-size:11px;color:var(--muted)">Ouvrir ▾</span>
+  </div>
+  <div class="lib" id="rj-body">
+    <div class="liinf">📦 Les posts supprimés via la croix arrivent ici (trop techniques pour l'instant, déjà publiés ailleurs, etc.). Ils ne sont <b>jamais regénérés automatiquement</b>. Tu peux les marquer "publié" plus tard si Simon a progressé et que tu postes ce contenu toi-même sur LinkedIn, ou les supprimer définitivement.</div>
+    <div class="fl" id="rj-list"></div>
   </div>
 </div>
 
 <div class="grid">
+
 
 <div class="card">
   <div class="card-h"><span>✍️</span><h2>Générer un post</h2><span class="bdg b-bl" id="gen-bdg">Simon · Cyber</span></div>
@@ -323,6 +342,12 @@ body{background:var(--bg);color:var(--text);font-family:'Space Grotesk',sans-ser
         <button class="tp" onclick="selTp(this)">Bug Bounty</button>
         <button class="tp" onclick="selTp(this)">Cryptographie</button>
         <button class="tp" onclick="selTp(this)">RGPD</button>
+        <button class="tp" onclick="selTp(this)">Mots de passe</button>
+        <button class="tp" onclick="selTp(this)">Authentification 2FA</button>
+        <button class="tp" onclick="selTp(this)">Ingénierie sociale</button>
+        <button class="tp" onclick="selTp(this)">VPN</button>
+        <button class="tp" onclick="selTp(this)">Sécurité IoT</button>
+        <button class="tp" onclick="selTp(this)">Sécurité mobile</button>
       </div>
     </div>
     <div id="sec-n" style="display:none">
@@ -378,14 +403,16 @@ body{background:var(--bg);color:var(--text);font-family:'Space Grotesk',sans-ser
       <div class="btn-row">
         <button class="btn btn-c" onclick="copyPost()">📋 Copier</button>
         <button class="btn btn-s" onclick="schedPost()">⏰ Programmer</button>
-        <a id="li-lnk" href="https://www.linkedin.com/in/simon-jutg%C3%A9-4b60bb38a" target="_blank" class="btn btn-li">💼 LinkedIn</a>
+        <button class="btn btn-li" id="li-lnk" onclick="publishLinkedIn()">📤 Partager sur LinkedIn</button>
       </div>
     </div>
   </div>
 </div>
 
 <div class="card">
-  <div class="card-h"><span>📅</span><h2>File de publication</h2><span class="bdg b-or" id="q-bdg">0 posts</span></div>
+  <div class="card-h"><span>📅</span><h2>File de publication</h2><span class="bdg b-or" id="q-bdg">0 posts</span>
+    <button onclick="resetGenerated()" style="margin-left:auto;background:rgba(255,109,0,.1);color:var(--orange);border:1px solid rgba(255,109,0,.25);border-radius:6px;padding:4px 11px;font-size:11px;cursor:pointer;font-family:'Space Grotesk',sans-serif;">🔄 RAZ génération</button>
+  </div>
   <div class="card-b">
     <div class="ql" id="q-list"><div class="qe">Aucun post programmé.</div></div>
     <div class="sep"></div>
@@ -395,9 +422,22 @@ body{background:var(--bg);color:var(--text);font-family:'Space Grotesk',sans-ser
 
 <div class="card full">
   <div class="card-h"><span>📜</span><h2>Historique</h2><span class="bdg b-gr" id="h-bdg">0</span>
-    <button onclick="clearHist()" style="margin-left:auto;background:rgba(255,23,68,.1);color:var(--red);border:1px solid rgba(255,23,68,.2);border-radius:6px;padding:4px 11px;font-size:11px;cursor:pointer;font-family:'Space Grotesk',sans-serif;">Vider</button>
+    <button onclick="toggleAddH()" style="margin-left:auto;background:rgba(0,200,255,.1);color:var(--cyan);border:1px solid rgba(0,200,255,.2);border-radius:6px;padding:4px 11px;font-size:11px;cursor:pointer;font-family:'Space Grotesk',sans-serif;">➕ Ajouter</button>
+    <button onclick="clearHist()" style="margin-left:6px;background:rgba(255,23,68,.1);color:var(--red);border:1px solid rgba(255,23,68,.2);border-radius:6px;padding:4px 11px;font-size:11px;cursor:pointer;font-family:'Space Grotesk',sans-serif;">Vider</button>
   </div>
-  <div class="card-b"><div class="hl" id="h-list"><div style="text-align:center;color:var(--muted);font-size:12px;padding:14px">Aucun post archivé.</div></div></div>
+  <div class="card-b">
+    <div id="addh-form" style="display:none;margin-bottom:14px;padding:12px;background:#060910;border:1px solid var(--border);border-radius:8px">
+      <div class="liinf">Pour un post publié directement sur LinkedIn sans passer par l'app (donc absent de l'historique). Une fois ajouté, ce thème compte dans l'anti-doublon et dans la pondération par popularité.</div>
+      <div class="fld"><label>Texte exact du post déjà publié</label><textarea id="addh-txt" placeholder="Colle ici le texte exact publié sur LinkedIn..."></textarea></div>
+      <div class="fld"><label>Thème</label><select id="addh-topic"></select></div>
+      <div class="fld"><label>Vues/impressions (optionnel)</label><input type="number" id="addh-views" min="0" inputmode="numeric" placeholder="0"></div>
+      <div class="btn-row">
+        <button class="btn btn-p" onclick="addManualH()">💾 Enregistrer dans l'historique</button>
+        <button class="btn btn-c" onclick="toggleAddH()">Annuler</button>
+      </div>
+    </div>
+    <div class="hl" id="h-list"><div style="text-align:center;color:var(--muted);font-size:12px;padding:14px">Aucun post archivé.</div></div>
+  </div>
 </div>
 
 <div class="card full">
@@ -430,7 +470,7 @@ body{background:var(--bg);color:var(--text);font-family:'Space Grotesk',sans-ser
 </div>
 
 </div>
-<p style="text-align:center;font-size:11px;color:var(--muted);padding-bottom:8px">GitHub Pages : <code style="color:var(--cyan)">nicolasjutge-debug.github.io/BotLik</code></p>
+<p style="text-align:center;font-size:11px;color:var(--muted);padding-bottom:8px">GitHub Pages : <code style="color:var(--cyan)">nicolasjutge-debug.github.io/li-bot</code></p>
 </div>
 
 <script>
@@ -447,21 +487,39 @@ const TL = {original:'📝 Original',repost:'🔁 Repost',congrats:'🎉 Félici
 const OL = {promotion:'promotion',certification:'certification obtenue',diplome:'diplôme',alternance:'alternance signée',projet:'lancement projet',anniversaire:'anniversaire pro'};
 
 /* ════ STORAGE ════ */
-const lsS=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}};
-const lsL=(k,d)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):d;}catch(e){return d;}};
+const lsS=(k,v)=>{
+  try{
+    localStorage.setItem(k,JSON.stringify(v));
+    return true;
+  }catch(e){
+    console.error('Erreur sauvegarde localStorage:', k, e);
+    toast('⚠️ Sauvegarde impossible — mode privé Safari ?','er');
+    return false;
+  }
+};
+const lsL=(k,d)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):d;}catch(e){console.error('Erreur lecture localStorage:',k,e);return d;}};
 const SK={acc:'sj5_acc',timer:'sj5_tmr',stats:'sj5_st'};
-const qk=a=>'sj5_q_'+a, hk=a=>'sj5_h_'+a, cfk=a=>'sj5_cf_'+a;
+
+// Vérifier disponibilité localStorage au démarrage
+let LS_AVAILABLE = true;
+try{
+  localStorage.setItem('__test__','1');
+  localStorage.removeItem('__test__');
+}catch(e){
+  LS_AVAILABLE = false;
+}
+const qk=a=>'sj5_q_'+a, hk=a=>'sj5_h_'+a, cfk=a=>'sj5_cf_'+a, rjk=a=>'sj5_rj_'+a;
 const GK={tok:'sj5_gh_tok',gid:'sj5_gh_gid',ts:'sj5_sync_ts'};
 
 /* ════ STATE ════ */
 let acc='simon', typ='original', topic='Pentest';
-let Q=[], H=[], CF=[];
+let Q=[], H=[], CF=[], RJ=[];
 let stats=lsL(SK.stats,{simon:{total:0,sent:0},niko:{total:0,sent:0}});
 let lastPost=null, tmrRun=false, tmrIv=null;
 
-function loadAcc(a){Q=lsL(qk(a),[]).filter(x=>x.text&&!x.text.startsWith('['));H=lsL(hk(a),[]);CF=lsL(cfk(a),[]);}
+function loadAcc(a){Q=lsL(qk(a),[]).filter(x=>x.text&&!x.text.startsWith('['));H=lsL(hk(a),[]);CF=lsL(cfk(a),[]);RJ=lsL(rjk(a),[]);}
 function saveAll(){
-  lsS(qk(acc),Q);lsS(hk(acc),H);lsS(cfk(acc),CF);lsS(SK.stats,stats);lsS(SK.acc,acc);
+  lsS(qk(acc),Q);lsS(hk(acc),H);lsS(cfk(acc),CF);lsS(rjk(acc),RJ);lsS(SK.stats,stats);lsS(SK.acc,acc);
   const b=document.getElementById('sv-bdg');b.textContent='💾 Sauvegardé';b.style.color='var(--green)';setTimeout(()=>b.style.color='',1500);
   queueSync();
 }
@@ -481,44 +539,74 @@ function toast(m,t='in'){const c=document.getElementById('tc'),el=document.creat
 })();
 
 /* ════ SWITCH COMPTE ════ */
+// BUGFIX MAJEUR : le thème sélectionné ('topic') retombait systématiquement sur la valeur
+// figée 'Pentest'/'Mutuelle santé' à chaque rechargement de page ET à chaque changement de
+// compte (switchAcc) — et ne changeait plus jamais tout seul ensuite. Si l'utilisateur cliquait
+// juste sur "⚡ Générer le post" sans re-sélectionner manuellement une autre pastille de thème,
+// il obtenait donc "toujours le même thème" — c'était probablement la cause n°1 du problème.
+function pickFreshTopic(a){
+  const themes=a==='simon'?TS:TN;
+  const usedTexts=new Set([...Q.map(q=>q.text),...H.map(h=>h.text),...RJ.map(r=>r.text)]);
+  const keys=Object.keys(themes);
+  const fresh=keys.filter(k=>{
+    const d=themes[k];
+    for(const ai of d.a){for(const ci of d.c){
+      if(!usedTexts.has((ai+'\n\n'+ci).trim()))return true;
+    }}
+    return false;
+  });
+  const pool=fresh.length?fresh:keys;
+  return pool[Math.floor(Math.random()*pool.length)];
+}
+function syncTopicPill(a,t){
+  const container=document.getElementById(a==='simon'?'tp-s':'tp-n');
+  if(!container)return;
+  container.querySelectorAll('.tp').forEach(b=>b.classList.toggle('sel',b.textContent===t));
+}
 function switchAcc(a){
   if(a===acc)return;
-  saveAll();
+  // Sauvegarder l'ancien compte avant de switcher
+  lsS(qk(acc),Q);lsS(hk(acc),H);lsS(cfk(acc),CF);lsS(rjk(acc),RJ);
+  queueSync();
   acc=a;
+  lsS(SK.acc,a); // Sauvegarder le nouveau compte actif
   loadAcc(a);
   const p=PR[a];
-  // Boutons switch
   document.getElementById('btn-s').className='acc-btn'+(a==='simon'?' act-s':'');
   document.getElementById('btn-n').className='acc-btn'+(a==='niko'?' act-n':'');
   document.getElementById('dot-s').style.display=a==='simon'?'inline-block':'none';
   document.getElementById('dot-n').style.display=a==='niko'?'inline-block':'none';
-  // Header
   const hav=document.getElementById('hdr-av');
   hav.className='hdr-av '+p.avc;hav.textContent=p.init;
   document.getElementById('hdr-t').textContent='LinkedIn Bot — '+p.nom;
   document.getElementById('hdr-s').textContent=p.role+' · Auto-publication 48h';
-  // Profil actif
-  const ap=document.getElementById('ap-div');
-  ap.className='ap '+p.apc;
-  const apav=document.getElementById('ap-av');
-  apav.className='ap-av '+p.avc;apav.textContent=p.init;
+  const ap=document.getElementById('ap-div');ap.className='ap '+p.apc;
+  const apav=document.getElementById('ap-av');apav.className='ap-av '+p.avc;apav.textContent=p.init;
   document.getElementById('ap-name').textContent=p.nom+' — Compte actif';
   document.getElementById('ap-desc').textContent=p.desc;
   document.getElementById('ap-li').href=p.li;
   document.getElementById('li-lnk').href=p.li;
-  // Badge générateur
   document.getElementById('gen-bdg').textContent=a==='simon'?'Simon · Cyber':'Nicolas · Assurance';
-  // Topics
   document.getElementById('sec-s').style.display=typ==='original'&&a==='simon'?'block':'none';
   document.getElementById('sec-n').style.display=typ==='original'&&a==='niko'?'block':'none';
-  // Console info
   document.getElementById('li-inf').textContent=a==='simon'?'📡 Actualités cybersécurité · Clique pour pré-remplir.':'📡 Actualités assurance & réseau · Clique pour pré-remplir.';
-  // Topic par défaut
-  topic=a==='simon'?'Pentest':'Mutuelle santé';
-  document.querySelectorAll(a==='simon'?'#tp-s .tp':'#tp-n .tp').forEach((b,i)=>b.classList.toggle('sel',i===0));
-  // Arrêter timer
+  topic=pickFreshTopic(a);
+  syncTopicPill(a,topic);
   if(tmrRun)pauseTimer();
-  updateStats();renderQ();renderH();renderCF();refreshTmr();
+  updateStats();renderQ();renderH();renderCF();renderRJ();rfTmr();
+  // Mettre à jour le titre console avec le compte actif
+  document.getElementById('li-inf').textContent = a==='simon'
+    ? '📡 Actualités cybersécurité · Simon · Clique pour pré-remplir.'
+    : '📡 Actualités assurance · Nicolas · Clique pour pré-remplir.';
+  // Re-rendre le feed avec le nouveau compte
+  renderFeed('actu');
+  if(document.getElementById('li-body').classList.contains('open')){
+    document.querySelectorAll('.litp').forEach(b=>b.classList.remove('act'));
+    document.querySelector('.litp').classList.add('act');
+    document.getElementById('tab-actu').style.display='block';
+    document.getElementById('tab-feli').style.display='none';
+    document.getElementById('tab-repost').style.display='none';
+  }
   toast('Compte '+p.nom+' actif','in');
 }
 
@@ -540,69 +628,590 @@ function updateStats(){
 
 /* ════ CONTENUS SIMON ════ */
 const TS = {
-  'Pentest':{a:["J'ai passé mon week-end à essayer de compromettre ma propre VM. Voilà ce que j'ai appris.","Le pentest c'est pas ce qu'on voit dans les films. C'est beaucoup plus méthodique — et plus intéressant.","En terminale STI2D, personne ne t'apprend à pirater. Alors je me forme tout seul. Voici comment."],
-  c:["J'ai découvert le pentest il y a quelques mois sur TryHackMe et franchement, ça a tout changé dans ma façon de voir la cybersécurité.\n\nAvant je pensais que 'hacker' c'était appuyer sur des touches en noir sur fond vert comme dans les films 😅 En vrai c'est beaucoup plus méthodique : reconnaissance, scan, exploitation, rapport. Chaque étape compte.\n\nCe que j'ai compris : pour défendre un système, il faut comprendre comment on l'attaque. C'est pas une option, c'est la base.\n\nEn ce moment je travaille sur des machines CTF niveau débutant. Je galère, je cherche, je lis des write-ups et je recommence. C'est comme ça qu'on apprend.\n\nMon objectif : contribuer à une vraie équipe de sécurité en alternance en 2027. Y'a du chemin mais je commence par les bases.\n\n#Pentest #CyberSécurité #CyberSecurity #TryHackMe #EthicalHacking #Alternance #STI2D","Petit retour sur ce que j'apprends en cybersécurité offensive.\n\nJe suis en terminale STI2D et en dehors des cours, je passe du temps sur TryHackMe. Ce qui me fascine dans le pentest c'est que chaque machine est un puzzle différent.\n\nLes techniques que j'explore : reconnaissance passive, scan Nmap, exploitation de failles web basiques. Je suis débutant encore, mais je progresse.\n\nSi des pros de la sécurité lisent ça : vous avez des conseils pour un étudiant qui veut se lancer ? 🙏\n\n#Pentest #CyberSécurité #TryHackMe #CTF #Alternance2027 #STI2D"]},
-  'SOC':{a:["Analyste SOC c'est le métier que je veux faire. Voilà pourquoi.","J'ai passé la soirée à analyser des logs sur un lab TryHackMe. C'est addictif."],
-  c:["Depuis quelque temps je me demande quelle direction prendre en cybersécurité. Et plus j'explore, plus le métier d'analyste SOC me parle.\n\nPas parce que c'est glamour mais parce que c'est concret. Analyser des logs, détecter des anomalies, investiguer une alerte... c'est du puzzle en temps réel.\n\nSur TryHackMe j'ai fait quelques salles orientées SOC : analyse de logs Windows, détection d'intrusion, forensics. C'est pas simple mais j'adore l'aspect enquête.\n\nPour ça que je veux une alternance — acquérir l'expérience terrain que les cours ne donnent pas.\n\n#SOC #BlueTeam #CyberSécurité #CyberSecurity #TryHackMe #Alternance"]},
-  'CTF':{a:["Mon premier flag CTF. La satisfaction ressentie... c'est indescriptible.","Les CTF m'apprennent plus en une heure que certains cours en une semaine."],
-  c:["Je me souviens encore de mon premier flag CTF. Ça m'avait pris 3h pour une machine 'très facile' 😅 Mais quand j'ai vu le flag s'afficher... j'ai compris pourquoi les gens font ça.\n\nLe truc avec les CTF c'est que tu apprends vraiment. Pas de théorie abstraite — t'as un système vulnérable et tu dois trouver comment entrer.\n\nCe que j'explore : les challenges web, les machines Linux avec escalade de privilèges, un peu de stéganographie.\n\nPour les débutants : commencez par TryHackMe parcours débutant. C'est gratuit, bien expliqué, et ya une vraie communauté.\n\n#CTF #CyberSécurité #TryHackMe #EthicalHacking #Alternance2027"]},
-  'OSINT':{a:["En 30 minutes de recherches sur des sources publiques, j'ai trouvé des infos dingues.","L'OSINT : la discipline cyber que personne n'enseigne à l'école."],
-  c:["J'ai découvert l'OSINT il y a quelques mois sur TryHackMe et ça m'a ouvert les yeux.\n\nL'OSINT c'est la collecte d'infos via des sources publiques et légales : réseaux sociaux, registres publics, métadonnées... En combinant tout ça, on construit un profil très détaillé d'une organisation.\n\nCe qui m'a frappé : on n'a pas besoin de 'hacker' quoi que ce soit. L'information est déjà là, publique. Il faut juste savoir chercher.\n\n#OSINT #CyberSécurité #CyberSecurity #TryHackMe #Alternance2027"]},
-  'Ransomware':{a:["J'ai étudié une attaque ransomware réelle pour comprendre comment ça marche. C'est flippant."],
-  c:["Dans ma formation en cybersécurité, j'ai passé du temps à analyser des cas réels d'attaques ransomware.\n\nCe qui m'a surpris : la plupart commencent par des choses très basiques. Un mail de phishing, un VPN pas mis à jour, un mot de passe faible.\n\nCe que j'ai appris sur la défense :\n→ Les sauvegardes testées régulièrement\n→ La segmentation réseau\n→ La détection précoce avant le chiffrement\n\nL'ANSSI publie des rapports sur les incidents en France. Lecture obligatoire.\n\n#Ransomware #CyberSécurité #ANSSI #Alternance2027"]},
-  'Phishing':{a:["J'ai failli cliquer sur un mail de phishing. Voici comment je m'en suis rendu compte."],
-  c:["Récemment j'ai reçu un mail qui ressemblait exactement à une notification LinkedIn. Lien cliquable, logo parfait. J'ai failli cliquer.\n\nCe qui m'a sauvé : l'habitude de vérifier l'adresse d'expédition. Et là... domaine bizarre, rien à voir avec LinkedIn.\n\nLes signaux d'alerte que je vérifie maintenant :\n→ L'adresse email complète de l'expéditeur\n→ L'URL du lien avant de cliquer\n→ La demande d'action urgente (red flag)\n\n#Phishing #CyberSécurité #Sensibilisation #STI2D"]},
-  'Zero Day':{a:["Un zero day c'est quoi exactement ? J'ai essayé de comprendre pour de vrai."],
-  c:["Un zero day c'est une faille dans un logiciel que le fabricant ne connaît pas encore — donc aucun patch, aucune défense directe.\n\nCe que j'ai compris : face à un zero day, c'est la défense en profondeur qui fait la différence. Segmentation réseau, moindre privilège, détection comportementale.\n\nOn peut pas patcher ce qu'on sait pas, mais on peut limiter les dégâts.\n\n#ZeroDay #CyberSécurité #Alternance2027"]},
-  'SIEM':{a:["J'ai essayé de comprendre comment fonctionne un SIEM. Voici ce que j'ai appris."],
-  c:["Dans mes explorations cybersécurité, je me suis intéressé aux SIEM — ces systèmes qui corrèlent tous les logs d'un SI pour détecter des menaces.\n\nCe qui m'a frappé : la donnée brute ne dit rien. C'est la corrélation qui révèle tout.\n\nC'est exactement le genre de travail que j'espère faire en alternance : analyser, corréler, investiguer.\n\n#SIEM #SOC #CyberSécurité #BlueTeam #Alternance2027"]},
-  'Cloud Security':{a:["La sécurité cloud c'est pas la même chose que la sécurité réseau classique."],
-  c:["En me formant en cybersécurité, j'ai réalisé que le cloud a complètement changé la surface d'attaque.\n\nPlus de périmètre fixe. Des accès gérés via des identités plutôt que des IPs. C'est un paradigme différent.\n\nCe que j'apprends : les misconfiguration cloud, la sécurité des pipelines CI/CD, le modèle de responsabilité partagée.\n\n#CloudSecurity #CyberSécurité #AWS #Azure #Alternance2027"]},
-  'Bug Bounty':{a:["Trouver des failles et être récompensé pour ça. Le bug bounty c'est un modèle qui me fascine."],
-  c:["Le bug bounty m'intéresse vraiment : des entreprises qui ouvrent leur périmètre à des chercheurs indépendants et qui récompensent les failles trouvées.\n\nPour un débutant comme moi c'est aussi un excellent terrain d'apprentissage.\n\nCe que j'apprends : vulnérabilités web basiques (XSS, SQLi, IDOR), méthodologie structurée, rédaction de rapports clairs.\n\n#BugBounty #CyberSécurité #EthicalHacking #Alternance2027"]},
-  'Cryptographie':{a:["La cryptographie c'est le fondement de toute sécurité numérique."],
-  c:["La cryptographie c'est la matière qui m'a le plus surpris dans mon parcours cyber.\n\nJe pensais que c'était que des maths abstraites. En fait c'est concret : comprendre pourquoi MD5 est cassé, comment fonctionne TLS, une PKI...\n\nCe qui m'a frappé : c'est souvent l'implémentation qui crée des vulnérabilités, pas l'algorithme.\n\n#Cryptographie #CyberSécurité #PKI #TLS #Alternance2027"]},
-  'RGPD':{a:["RGPD et cybersécurité c'est plus lié qu'on le croit."],
-  c:["Dans mon parcours vers la cybersécurité, j'ai réalisé qu'ignorer le cadre juridique serait une erreur.\n\nLe RGPD n'est pas qu'un truc pour les juristes. Il impose des mesures techniques : chiffrement des données perso, notification sous 72h, privacy by design.\n\nLa CNIL publie des recommandations très utiles. Ressource à bookmarker.\n\n#RGPD #GDPR #CyberSécurité #DataProtection #Alternance2027"]}
+  "Pentest": {
+    "a": [
+      "J'ai testé mon premier petit exercice de piratage \"éthique\" ce week-end et c'était trop cool.",
+      "Le pentest c'est pas du tout ce que je croyais avant de m'y intéresser.",
+      "Personne ne nous apprend ça en cours, alors j'apprends tout seul le soir.",
+      "Trois heures bloqué sur un exercice hier soir, et puis le déclic. Ce sentiment-là, j'en redemande.",
+      "Je viens de comprendre un truc bête : la faille la plus dangereuse c'est souvent la plus simple, pas la plus technique."
+    ],
+    "c": [
+      "Je découvre le pentest depuis quelques mois sur TryHackMe et je trouve ça vraiment passionnant.\n\nAu début je pensais que pirater c'était juste taper du code en noir et vert comme dans les films 😅 En fait pas du tout, c'est plus comme résoudre une enquête étape par étape.\n\nJe suis encore débutant, je galère beaucoup, je regarde des vidéos YouTube pour comprendre, je recommence quand je rate. Mais c'est ça qui me plaît dans la cybersécurité.\n\nMon rêve c'est de faire une alternance dans ce domaine en 2027. Y'a encore plein de choses à apprendre avant mais je suis motivé !",
+      "Petit retour sur mes débuts en cybersécurité.\n\nJe suis en terminale STI2D et le soir je m'entraîne un peu sur TryHackMe, une plateforme pour apprendre la sécurité informatique en s'amusant.\n\nFranchement c'est pas facile au début, je comprends pas toujours tout, mais petit à petit ça devient plus clair.\n\nSi des gens qui travaillent dans la cybersécurité passent par ici : vous avez des conseils pour un lycéen qui débute ? Je prends tout ce que vous pouvez me dire 🙏",
+      "Un mois que je m'entraîne régulièrement au pentest sur TryHackMe, et voici ce que ça m'a appris jusqu'ici :\n\n1/ La patience compte plus que la technique. Je passe souvent plus de temps à chercher qu'à \"pirater\" vraiment.\n\n2/ Écrire ce que j'essaie, même quand ça rate, m'aide à avancer. Je note tout dans un carnet.\n\n3/ La communauté est hyper accessible. Les forums et les writeups m'ont débloqué plein de fois.\n\nEncore débutant, mais je progresse un peu chaque semaine.",
+      "On me demande souvent ce qu'est le pentest \"en vrai\". J'ai trouvé une comparaison qui parle à mes potes : c'est un peu comme tester si les portes et fenêtres d'une maison sont bien fermées, sauf que la maison c'est un site web ou une appli.\n\nOn essaie plein de choses, méthodiquement, pour voir ce qui a été oublié. Sauf qu'ici, on a le droit de le faire, et c'est même hyper recherché par les entreprises.\n\nPlus j'apprends, plus je me dis que c'est exactement ce genre de métier que je veux faire.",
+      "Petit fail assumé : la semaine dernière j'ai passé 2h à chercher une faille compliquée sur un exercice TryHackMe... alors que la solution était un mot de passe par défaut jamais changé. Je me suis senti bête, et en même temps c'est exactement ça la leçon : on cherche souvent trop compliqué alors que les failles simples sont les plus fréquentes en vrai.\n\nJe note ce genre d'erreur dans mon carnet, ça m'aide à progresser plus que les exercices réussis du premier coup.",
+      "Un chiffre qui m'a marqué en lisant sur le pentest : dans beaucoup de tests d'intrusion, la faille exploitée n'est pas une technique de génie, c'est une mise à jour jamais faite ou un accès mal configuré.\n\nÇa change ma façon de voir le métier : c'est pas que du génie technique, c'est aussi beaucoup de rigueur et de méthode. Ça me rassure un peu, en tant que débutant — la rigueur, ça s'apprend."
+    ]
+  },
+  "SOC": {
+    "a": [
+      "Je crois que le métier d'analyste cybersécurité c'est ce que je veux faire plus tard.",
+      "J'ai regardé des vidéos sur le métier d'analyste en sécurité informatique, ça m'intéresse beaucoup.",
+      "Question bête peut-être, mais c'est quoi la vraie différence entre un antivirus et un SOC ? J'ai creusé.",
+      "Un chiffre m'a marqué cette semaine : certaines attaques restent invisibles plusieurs mois avant d'être repérées.",
+      "Je pensais qu'un analyste SOC passait ses journées à \"arrêter des hackers\". La réalité est visiblement plus nuancée que ça."
+    ],
+    "c": [
+      "Je me pose beaucoup de questions sur mon orientation en cybersécurité. Et plus je regarde, plus le métier d'analyste sécurité (on dit SOC) me donne envie.\n\nEn gros ces personnes surveillent les ordinateurs d'une entreprise pour repérer si quelqu'un essaie de pirater le système. Ça a l'air un peu comme une enquête en temps réel, et j'aime bien cette idée.\n\nJ'ai commencé à regarder quelques tutos pour comprendre les bases, mais c'est encore flou pour moi. Je voudrais en savoir plus avant de choisir vraiment cette voie.\n\nSi quelqu'un travaille dans ce domaine et veut bien m'expliquer un peu son métier, je serais trop content !",
+      "Je continue à me renseigner sur le métier d'analyste SOC, ça reste l'orientation qui m'attire le plus pour l'instant.\n\nCe qui me plaît c'est le côté \"enquête\" : repérer des signaux bizarres au milieu de plein d'informations normales, un peu comme chercher une aiguille dans une botte de foin.\n\nJe regarde des témoignages de gens qui font ce métier pour mieux comprendre le quotidien, parce que sur le papier ça paraît différent de la réalité.",
+      "Je cherchais une image simple pour comprendre le métier de SOC. Voilà celle qui m'a aidé : c'est un peu comme un gardien qui regarde tous les écrans de vidéosurveillance d'un immeuble en même temps, sauf que les écrans ce sont des connexions et des fichiers.\n\nLe plus dur, d'après ce que je lis, c'est de repérer LE truc bizarre au milieu de milliers de trucs normaux.\n\nC'est exactement le genre de challenge qui m'attire.",
+      "Je continue mes recherches sur le métier d'analyste SOC, et j'ai une question pour les pros qui passent par ici.\n\nCe que je n'arrive pas encore à visualiser : à quoi ressemble VRAIMENT une journée type ? Entre ce qu'on voit dans les vidéos et la réalité du terrain, j'imagine qu'il y a un écart.\n\nSi certains veulent bien partager leur quotidien, je suis preneur, ça m'aiderait beaucoup pour mon orientation.",
+      "Petit jalon perso : j'ai enfin réussi à comprendre, sans vidéo d'aide, comment lire un log d'alerte basique sur un simulateur SOC en ligne. Rien d'extraordinaire pour quelqu'un du métier, mais pour moi c'est la première fois que ça fait vraiment sens, pas juste appris par cœur.\n\nÇa donne envie de continuer à creuser ce métier d'analyste.",
+      "J'ai regardé une conférence en replay sur le quotidien d'un analyste SOC, et un truc m'a marqué : la personne qui témoignait disait qu'elle passe plus de temps à écarter des fausses alertes qu'à traiter de vraies attaques.\n\nJe ne m'attendais pas à ça. Ça montre que le métier demande autant de patience que de technique, un peu comme trier plutôt que juste réagir."
+    ]
+  },
+  "CTF": {
+    "a": [
+      "J'ai réussi mon premier petit défi de cybersécurité hier soir, j'étais trop content !",
+      "Apprendre en s'amusant avec des défis en ligne, c'est ma méthode pour progresser en cyber.",
+      "Sur 10 défis tentés ce mois-ci, j'en ai réussi 4 sans aide. Petite victoire mais victoire quand même.",
+      "Ce qui m'accroche le plus dans les CTF, c'est pas de gagner, c'est de comprendre après coup pourquoi j'ai bloqué.",
+      "Ma règle depuis peu sur les CTF : si je bloque plus de 30 minutes, je ferme l'ordi et j'y reviens le lendemain à froid."
+    ],
+    "c": [
+      "Hier j'ai enfin réussi un exercice sur TryHackMe après avoir bloqué pendant un bon moment. La sensation quand ça marche enfin, c'est génial.\n\nCe que j'aime avec ces exercices (on les appelle des CTF), c'est qu'on apprend en pratiquant directement, pas juste en lisant de la théorie. On a un petit ordinateur \"piège\" et on doit trouver comment rentrer dedans.\n\nJe suis vraiment débutant encore, je rate souvent, je cherche des indices ou je regarde des explications après avoir essayé. Mais j'apprends à chaque fois un truc nouveau.\n\nPour les autres lycéens qui aimeraient essayer : TryHackMe a une partie gratuite pour débutants, c'est plutôt sympa pour commencer.",
+      "Je me suis remis à faire des CTF (des défis de cybersécurité en ligne) presque tous les soirs cette semaine.\n\nCe qui me motive le plus, c'est pas juste de réussir un défi, c'est de voir sur les forums comment d'autres l'ont résolu différemment de moi. Y'a souvent 3 ou 4 façons d'arriver au même résultat.\n\nJe suis loin d'être le meilleur, je regarde encore beaucoup de writeups (les explications après coup) quand je bloque trop longtemps. Mais j'apprends à chaque fois, même sur les défis que je ne finis pas.",
+      "Petit bilan du mois sur les CTF : plus de régularité, un peu moins de découragement quand je bloque.\n\nLe vrai changement, c'est d'avoir accepté de lire un writeup après 30-40 minutes de blocage au lieu de m'acharner pendant des heures. J'apprends autant, en beaucoup moins de temps perdu.\n\nSimple à dire, plus dur à appliquer, mais ça marche.",
+      "Ce que les CTF m'ont appris ces dernières semaines, en 3 points :\n\n1/ Il y a presque toujours plusieurs chemins pour arriver au même résultat.\n\n2/ Bloquer longtemps sur un truc n'est pas un échec, c'est presque la norme.\n\n3/ Comparer sa méthode à celle des autres après coup apprend souvent plus que le défi lui-même.\n\nJe suis loin d'être bon, mais je progresse à mon rythme.",
+      "J'ai abandonné un CTF en plein milieu la semaine dernière, frustré, persuadé d'être nul. Le lendemain, à froid, j'ai relu l'énoncé et trouvé la solution en 10 minutes.\n\nDepuis j'ai pris une règle : quand je bloque trop longtemps, je ferme l'ordi et j'y reviens le lendemain plutôt que de m'acharner le soir même, fatigué.",
+      "Avant de commencer les CTF, je pensais qu'il fallait déjà tout savoir en cybersécurité pour s'y mettre. En fait c'est l'inverse : c'est en butant sur les défis, en cherchant, en ratant, qu'on apprend le plus vite.\n\nJ'aurais aimé le savoir plus tôt, ça m'aurait évité de repousser le moment de commencer."
+    ]
+  },
+  "OSINT": {
+    "a": [
+      "J'ai appris qu'on peut trouver beaucoup d'infos sur quelqu'un juste en cherchant sur Internet, légalement.",
+      "Ça s'appelle l'OSINT, et c'est un des trucs les plus intéressants que j'ai découvert en cybersécurité.",
+      "J'ai retrouvé la ville d'un inconnu juste avec une photo de fenêtre en arrière-plan. Ça fait réfléchir.",
+      "L'OSINT c'est le domaine cyber le plus accessible pour un débutant je trouve, et pourtant le moins connu.",
+      "J'ai fait un test OSINT sur un pote (avec son accord). Il ne s'attendait clairement pas à ce que je trouve autant en 15 minutes."
+    ],
+    "c": [
+      "Je viens de découvrir un truc qui s'appelle l'OSINT et ça m'a un peu surpris.\n\nEn gros c'est chercher des informations sur quelqu'un ou une entreprise juste avec ce qui est déjà public sur Internet : réseaux sociaux, sites web, etc. Pas besoin de pirater quoi que ce soit, l'info est juste là si on sait chercher.\n\nÇa m'a fait réfléchir à ce que moi-même je laisse comme infos en ligne. Du coup j'ai vérifié mes propres réseaux sociaux pour voir ce qu'on pouvait trouver sur moi.\n\nC'est un des trucs les plus accessibles pour débuter en cybersécurité je trouve, pas besoin d'être super technique pour commencer.",
+      "Je continue à m'entraîner un peu à l'OSINT, et plus je pratique, plus je me dis qu'il faut faire attention à ce qu'on partage en ligne.\n\nC'est fou ce qu'on peut retrouver juste en croisant des infos publiques : une photo, un nom de ville, un horaire de post... rien d'illégal, juste de la recherche bien faite.\n\nJe trouve ça hyper accessible comme entrée en cybersécurité, comparé à d'autres domaines plus techniques.",
+      "L'OSINT, en gros, c'est un peu comme un jeu de piste géant où tous les indices sont déjà publics, il suffit de savoir les relier.\n\nCe qui m'a bluffé en m'entraînant : à partir d'une simple photo, on peut parfois deviner une ville, une date, voire une habitude de quelqu'un.\n\nÇa m'a surtout donné envie de nettoyer mes propres réseaux sociaux.",
+      "Avant de m'intéresser à l'OSINT, je pensais que la vie privée en ligne se limitait à \"ne pas mettre son adresse sur Facebook\".\n\nMaintenant je comprends que ce sont surtout les petits détails qui s'additionnent : un horaire régulier de post, un fond d'écran reconnaissable, un tag de localisation oublié.\n\nJe fais beaucoup plus attention depuis.",
+      "Je me suis amusé (avec son accord) à faire un mini-OSINT sur un pote, juste avec ce qu'il partage publiquement. En 15 minutes j'avais son lycée, sa ville, et à peu près son emploi du temps de la semaine.\n\nIl ne s'attendait pas à ce qu'on puisse trouver autant sans rien pirater. On a fait le tri sur ses réseaux ensemble juste après.",
+      "J'ai lu un article sur des enquêteurs qui utilisent l'OSINT pour retrouver des personnes disparues, uniquement avec des infos publiques.\n\nÇa m'a fait voir la discipline différemment : c'est pas juste un outil de curiosité, ça peut vraiment servir à des choses importantes quand c'est utilisé pour de bonnes raisons."
+    ]
+  },
+  "Ransomware": {
+    "a": [
+      "J'ai regardé un reportage sur les ransomwares, ces virus qui bloquent les ordinateurs des entreprises. Flippant.",
+      "Les ransomwares, c'est clairement ce qui me fait le plus flipper en cybersécurité pour le moment.",
+      "Une boulangerie bloquée 3 jours par un ransomware. Pas une multinationale, une boulangerie de quartier.",
+      "Le pire dans les ransomwares, c'est que la faille de départ est souvent bête comme chou.",
+      "Ce qui m'inquiète le plus avec les ransomwares, c'est pas la technique de l'attaque, c'est qu'on connaît la parade depuis des années et qu'on l'applique encore trop peu."
+    ],
+    "c": [
+      "J'ai regardé une vidéo qui expliquait comment marchent les ransomwares, ces virus qui bloquent tous les fichiers d'une entreprise jusqu'à ce qu'elle paie une rançon.\n\nCe qui m'a surpris c'est que souvent ça commence par un truc tout simple : quelqu'un clique sur un mail piégé, ou un mot de passe trop facile à deviner.\n\nC'est en regardant ce genre de cas que je comprends pourquoi la cybersécurité c'est important, même pour des petites entreprises qui pensent que ça n'arrive qu'aux grandes.",
+      "Je continue à m'intéresser aux ransomwares, ces attaques qui bloquent tous les fichiers d'une entreprise et demandent une rançon pour les débloquer.\n\nCe qui me marque, c'est que ça peut toucher n'importe qui : hôpitaux, écoles, petites entreprises... pas que les grosses boîtes comme je le pensais au début.\n\nJ'ai appris que la meilleure protection reste souvent la plus simple : faire des sauvegardes régulières et ne pas cliquer n'importe où. Pas besoin d'être expert pour comprendre ça.",
+      "Ce que j'ai retenu en étudiant plusieurs cas de ransomware récents :\n\n1/ Ça touche autant les petites structures que les grandes, parfois même plus.\n\n2/ Le point d'entrée est presque toujours humain : un mail, un mot de passe faible.\n\n3/ Les sauvegardes régulières restent la meilleure protection, bien avant les outils compliqués.\n\nDes bases simples, mais visiblement pas si appliquées que ça sur le terrain.",
+      "Un truc qui m'a marqué en lisant sur les ransomwares : certaines entreprises payent la rançon et ne récupèrent même pas tous leurs fichiers.\n\nAucune garantie, juste un pari risqué. Ça montre bien que prévenir coûte toujours moins cher que guérir, même en informatique.",
+      "Un chiffre qui m'a fait tiquer en révisant le sujet : une bonne partie des entreprises touchées par un ransomware n'ont toujours pas de sauvegarde externe à jour au moment de l'attaque.\n\nLe conseil de base (sauvegarder ailleurs, régulièrement) existe depuis toujours, mais visiblement il est encore trop peu appliqué en vrai.",
+      "Question que je me pose en étudiant les ransomwares : pourquoi on continue à sous-estimer un risque qu'on connaît depuis des années ?\n\nJe crois que c'est un peu comme le sport ou l'alimentation : on sait ce qu'il faudrait faire, mais tant que ça n'arrive qu'aux autres, on repousse. En cybersécurité, ce réflexe coûte cher."
+    ]
+  },
+  "Phishing": {
+    "a": [
+      "J'ai presque cliqué sur un faux mail aujourd'hui. Du coup je fais attention maintenant.",
+      "Je me suis remis à apprendre à repérer les tentatives de phishing, et y'en a vraiment partout.",
+      "Un mail \"de la CAF\" avec une faute dans le nom de l'expéditeur. Ça se joue à ces détails-là.",
+      "Je me suis amusé à comparer un vrai mail LinkedIn et un faux. Même moi j'ai eu du mal au début.",
+      "J'ai appris à ma mère à repérer un faux SMS de livraison. Elle me demande maintenant mon avis avant de cliquer sur quoi que ce soit."
+    ],
+    "c": [
+      "Aujourd'hui j'ai reçu un mail qui ressemblait à une vraie notification LinkedIn. J'ai failli cliquer direct.\n\nHeureusement j'ai eu le réflexe de regarder l'adresse de l'expéditeur, et c'était bizarre, rien à voir avec LinkedIn. C'était un piège (on appelle ça du phishing).\n\nDepuis je fais plus attention : je regarde toujours qui envoie le mail avant de cliquer sur quoi que ce soit, et je me méfie quand un message me met la pression pour agir vite.\n\nC'est un petit réflexe simple mais je pense que ça peut éviter beaucoup de problèmes.",
+      "En regardant des exemples de mails de phishing pour m'entraîner à les reconnaître, je me suis rendu compte à quel point certains sont bien faits.\n\nLes signes que j'essaie de repérer maintenant : une adresse mail bizarre, des fautes d'orthographe, et surtout un message qui met la pression pour agir vite (\"votre compte sera bloqué dans 24h\" par exemple).\n\nC'est un des trucs les plus simples à comprendre en cybersécurité, mais aussi un des plus utiles au quotidien, même sans connaissances techniques.",
+      "Petit récap des réflexes anti-phishing que j'ai fini par adopter :\n\n1/ Toujours vérifier l'adresse complète de l'expéditeur, pas juste le nom affiché.\n\n2/ Se méfier de toute urgence artificielle (\"24h pour agir\").\n\n3/ Ne jamais cliquer depuis le mail, aller directement sur le site officiel.\n\nRien de très technique, juste de la méfiance saine.",
+      "Je m'entraîne à repérer des faux mails de phishing, et certains sont vraiment bien imités.\n\nCe qui m'intéresserait de savoir de la part de pros du domaine : est-ce que les techniques évoluent vite, ou est-ce que ce sont toujours un peu les mêmes ficelles qui reviennent ?\n\nCurieux d'avoir des retours d'expérience.",
+      "Ma mère a failli se faire avoir par un faux SMS \"colis en attente\" la semaine dernière. Je lui ai montré comment vérifier le lien avant de cliquer (survoler, regarder le vrai nom de domaine), et depuis elle me demande son avis avant de cliquer sur quoi que ce soit.\n\nPetite victoire de sensibilisation à la maison.",
+      "Le réflexe le plus simple que j'ai adopté contre le phishing : ne jamais cliquer depuis le mail ou le SMS, toujours retaper l'adresse du site moi-même dans le navigateur.\n\nÇa prend 10 secondes de plus et ça évite direct la grande majorité des pièges, même les mieux imités."
+    ]
+  },
+  "Zero Day": {
+    "a": [
+      "J'ai entendu parler des \"zero day\" en cybersécurité, j'ai voulu comprendre ce que c'est.",
+      "Plus j'avance dans la cybersécurité, plus je me rends compte qu'il existe des failles que personne ne connaît encore.",
+      "Une faille que personne ne connaît encore, même pas ceux qui ont créé le logiciel. Ça donne le vertige.",
+      "Les zero day, c'est un peu la définition même de l'imprévu en cybersécurité.",
+      "Une image qui m'a aidé à comprendre les zero day : une fissure invisible dans un mur, jusqu'au jour où quelqu'un tape pile au bon endroit."
+    ],
+    "c": [
+      "En lisant des articles sur la cybersécurité, je suis tombé sur le terme \"zero day\". En fait c'est une faille dans un logiciel que même les créateurs ne connaissent pas encore, donc personne ne peut la corriger tout de suite.\n\nÇa fait un peu peur dit comme ça, mais j'ai appris que les entreprises essaient quand même de se protéger en limitant les accès et en surveillant les comportements bizarres sur leurs systèmes.\n\nEncore un truc que je découvre petit à petit dans mon apprentissage de la cybersécurité.",
+      "Je reviens sur les \"zero day\" parce que c'est un concept qui m'a marqué dans mon apprentissage.\n\nEn fait, ça veut dire qu'une faille existe dans un logiciel, mais ni les pirates ni les créateurs ne le savent encore au moment où elle est découverte par quelqu'un de malveillant. Donc personne n'a eu le temps de la corriger.\n\nÇa montre bien pourquoi la cybersécurité doit toujours s'adapter, même quand on pense avoir tout sécurisé.",
+      "Pour comprendre les zero day, je me suis fait une image simple : c'est comme une serrure avec un défaut de fabrication que même le serrurier ignore.\n\nTant que personne ne le découvre, la porte semble sûre. Le jour où quelqu'un de malveillant le trouve avant les autres, c'est l'urgence.\n\nÇa montre que la sécurité, c'est jamais vraiment \"fini\".",
+      "Avant, je pensais qu'une entreprise \"bien sécurisée\" était à l'abri de tout. Les zero day m'ont fait comprendre que c'est plus nuancé que ça.\n\nMême les systèmes les mieux protégés peuvent avoir une faille que littéralement personne ne connaît encore.\n\nCe qui compte alors, c'est la vitesse de réaction une fois la faille découverte.",
+      "Une autre image qui m'a aidé à comprendre les zero day : c'est comme une fissure invisible dans un mur, indétectable jusqu'au jour où quelqu'un tape exactement au bon endroit.\n\nLe mur avait l'air solide la veille. C'est ce côté imprévisible qui rend le sujet passionnant et un peu angoissant en même temps.",
+      "J'ai suivi l'actu d'une faille zero day corrigée en urgence sur un logiciel très utilisé. Ce qui m'a marqué : le temps entre la découverte et le correctif était de quelques heures seulement.\n\nÇa montre à quel point la réactivité compte autant que la prévention dans ce métier."
+    ]
+  },
+  "SIEM": {
+    "a": [
+      "J'ai découvert qu'il existe des logiciels qui surveillent tout ce qui se passe sur le réseau d'une entreprise.",
+      "J'ai continué à creuser le métier d'analyste SOC, et les outils qu'ils utilisent m'intéressent de plus en plus.",
+      "Des millions de lignes de logs par jour, et un métier entier dédié à y trouver l'aiguille dans la botte de foin.",
+      "Le SIEM, c'est sûrement l'outil le moins \"spectaculaire\" et le plus utile de la cybersécurité.",
+      "J'ai testé une version simplifiée d'un outil type SIEM pour un exercice. Voir les alertes défiler en direct, c'est très différent de juste lire une définition."
+    ],
+    "c": [
+      "En regardant des vidéos sur le métier d'analyste sécurité, j'ai découvert les SIEM. C'est un logiciel qui regroupe toutes les informations des ordinateurs d'une entreprise pour repérer si quelque chose de bizarre se passe.\n\nCe qui m'a marqué : une seule information bizarre ne veut pas forcément dire grand-chose, mais plusieurs informations bizarres en même temps, ça peut être le signe d'une attaque.\n\nC'est exactement le genre de travail que j'aimerais découvrir en vrai pendant une alternance.",
+      "Je m'intéresse de plus en plus aux outils utilisés par les analystes en cybersécurité, notamment les SIEM.\n\nCe que j'ai compris : c'est un peu comme un grand tableau de bord qui rassemble toutes les alertes d'une entreprise, pour repérer plus vite si quelque chose d'anormal se passe.\n\nJ'aimerais bien voir ça concrètement un jour, peut-être pendant une alternance. Pour l'instant je me contente de regarder des vidéos qui expliquent le principe.",
+      "Ce qui m'a surpris en regardant comment fonctionne un SIEM : ce n'est pas l'outil qui décide si c'est une attaque, c'est toujours un humain derrière qui interprète l'alerte.\n\nL'outil trie, la personne comprend. Les deux sont indispensables.",
+      "Ce que je retiens de mes recherches sur les SIEM, en 3 points simples :\n\n1/ Ça centralise des infos qui, séparées, ne veulent rien dire.\n\n2/ Ça permet de remonter le fil d'une attaque après coup, pas juste de la voir en direct.\n\n3/ Ça demande autant de bon sens que de technique pour bien s'en servir.\n\nEncore un métier que j'aimerais découvrir de près en alternance.",
+      "J'ai testé une version gratuite et simplifiée d'un outil type SIEM pour un exercice de cours. Voir en direct des dizaines d'\"événements\" défiler et devoir juger lesquels sont suspects, c'est très différent de juste lire une définition.\n\nJe comprends mieux maintenant pourquoi on dit que ce métier demande de l'œil autant que de la technique.",
+      "Question que je me pose en découvrant les SIEM : comment on évite de se noyer sous le nombre d'alertes sans en louper une importante ?\n\nD'après ce que je lis, c'est justement tout l'art du métier d'analyste. Ça a l'air difficile, et ça me donne encore plus envie de comprendre comment les pros s'organisent."
+    ]
+  },
+  "Cloud Security": {
+    "a": [
+      "Je commence à comprendre que protéger des données \"dans le cloud\" c'est différent de protéger un ordinateur normal.",
+      "Je continue à découvrir la sécurité du cloud, et plus j'apprends, plus je me dis que c'est un vrai métier d'avenir.",
+      "Nos photos, nos mails, nos devoirs : tout ou presque est \"dans le cloud\" maintenant sans qu'on y pense vraiment.",
+      "Protéger le cloud, c'est plus une question d'accès que de murs, et ça change tout.",
+      "J'avais activé la double authentification sur mon ordinateur, mais pas sur mon compte cloud où sont stockés tous mes fichiers. Corrigé depuis."
+    ],
+    "c": [
+      "En m'intéressant à la cybersécurité, j'ai réalisé que de plus en plus d'entreprises stockent leurs données \"dans le cloud\" plutôt que sur leurs propres ordinateurs.\n\nÇa change la façon de se protéger : ce n'est plus juste protéger un bâtiment ou un ordinateur, c'est protéger des comptes et des accès un peu partout.\n\nJ'ai encore beaucoup à apprendre sur ce sujet, mais c'est un domaine qui a l'air d'avoir de l'avenir.",
+      "En creusant un peu plus le sujet de la sécurité dans le cloud, j'ai compris une chose simple mais importante : on ne protège plus juste \"un ordinateur\", mais des accès et des identités un peu partout.\n\nDu coup les mots de passe et l'authentification à deux facteurs deviennent encore plus importants que pour un ordinateur classique.\n\nC'est un domaine qui a l'air d'avoir beaucoup d'avenir, et j'aimerais comprendre encore mieux comment ça fonctionne concrètement.",
+      "Pour comprendre la sécurité du cloud, j'ai arrêté de penser \"ordinateur\" et j'ai commencé à penser \"clés\".\n\nCe n'est plus un bâtiment à protéger, ce sont des centaines de clés (les accès) qu'il faut distribuer intelligemment et retirer dès que quelqu'un n'en a plus besoin.\n\nUn mauvais partage d'accès peut suffire à tout compromettre.",
+      "Avant de m'y intéresser, je pensais que \"le cloud\" c'était juste un stockage en ligne parmi d'autres.\n\nJ'ai compris que la vraie question de sécurité, c'est qui a accès à quoi, et depuis où. Beaucoup d'incidents viennent d'un accès mal configuré, pas d'un piratage sophistiqué.\n\nUn domaine que je veux creuser encore plus.",
+      "Je me suis rendu compte que j'avais activé la double authentification sur mon ordinateur, mais pas sur mon compte cloud où sont sauvegardés tous mes devoirs et mes photos. Corrigé depuis.\n\nUn petit oubli comme ça peut suffire à rendre tout le reste inutile.",
+      "Un truc qui m'a surpris en lisant sur la sécurité cloud : une grande partie des incidents ne viennent pas d'un piratage sophistiqué, mais d'un accès mal configuré, ouvert par erreur à tout le monde.\n\nLe plus grand risque, c'est souvent une case mal cochée, pas un génie du mal."
+    ]
+  },
+  "Bug Bounty": {
+    "a": [
+      "J'ai découvert qu'on peut être payé pour trouver des failles dans des sites, légalement. Ça s'appelle le bug bounty.",
+      "Je continue à m'intéresser au bug bounty, ça reste un des trucs qui me motive le plus en cybersécurité.",
+      "Être payé pour signaler une faille plutôt que pour la garder secrète. Le bug bounty a un côté un peu \"gagnant-gagnant\" que j'aime bien.",
+      "Je regarde les rapports de débutants en bug bounty plus que ceux des experts. C'est là que j'apprends le plus.",
+      "Petit objectif que je me suis fixé : comprendre en entier un rapport de bug bounty de débutant, du problème jusqu'à la correction. Fier d'y être arrivé."
+    ],
+    "c": [
+      "Un truc que je trouve génial en cybersécurité : le bug bounty. Des entreprises payent des gens pour essayer de trouver des failles dans leurs sites ou applis, et les leur signaler au lieu de les exploiter méchamment.\n\nPour un débutant comme moi c'est encore un peu loin, mais c'est motivant de voir que même sans diplôme, si on est doué et qu'on s'entraîne, on peut commencer à essayer ce genre de choses.\n\nJ'aimerais bien tester un jour quand je serai un peu plus à l'aise avec les bases.",
+      "Je suis retourné voir comment fonctionne le bug bounty, parce que c'est vraiment un concept qui me plaît.\n\nEn gros, des entreprises proposent une récompense à qui trouve une faille de sécurité dans leur site ou leur appli, à condition de la signaler proprement au lieu de l'exploiter.\n\nJe regarde quelques rapports de débutants pour comprendre comment ils s'y prennent. C'est encore loin pour moi, mais ça me donne un objectif clair pour progresser.",
+      "Ce qui me plaît dans le principe du bug bounty, c'est qu'il transforme la curiosité en quelque chose d'utile et de légal.\n\nAu lieu de se demander \"comment casser ce site\", on se demande \"comment le rendre plus solide\". Nuance énorme.\n\nUn jour j'essaierai, pour l'instant j'apprends en lisant les autres.",
+      "Je lis pas mal de rapports de bug bounty de débutants pour comprendre leur démarche.\n\nQuestion pour ceux qui pratiquent : vous conseillez de se spécialiser sur un type de faille au début, ou plutôt de rester généraliste le temps d'apprendre les bases ?\n\nJ'hésite sur la meilleure approche pour progresser.",
+      "Je me suis fixé un petit objectif perso : arriver à comprendre en entier un rapport de bug bounty de débutant, du problème trouvé jusqu'à la correction proposée, sans me perdre en route.\n\nÇa a pris du temps, mais une fois que j'ai tout suivi, j'étais fier. Petit pas, mais un pas quand même vers ce que j'aimerais faire un jour.",
+      "J'ai lu l'histoire de quelqu'un qui a signalé sa première faille via un programme de bug bounty avant même d'avoir un diplôme en cybersécurité.\n\nÇa m'a redonné un coup de motivation : le niveau scolaire compte, mais c'est surtout la pratique et la curiosité qui font la différence dans ce domaine."
+    ]
+  },
+  "Cryptographie": {
+    "a": [
+      "La cryptographie c'est le truc qui protège nos mots de passe et nos messages. J'essaie de comprendre les bases.",
+      "Je reviens un peu sur la cryptographie, c'est un sujet que je trouve difficile mais que j'aime bien creuser.",
+      "Un message illisible pour tout le monde sauf pour celui qui a la bonne clé. La cryptographie, c'est presque de la magie appliquée.",
+      "Le cadenas vert dans la barre d'adresse, je l'ai toujours vu sans jamais comprendre ce qu'il y avait derrière.",
+      "J'ai essayé de chiffrer un message à la main avec une méthode toute simple avant de voir les vraies méthodes utilisées en informatique. Bonne façon de comprendre le principe de base."
+    ],
+    "c": [
+      "En cours et de mon côté, j'essaie de comprendre la cryptographie, c'est-à-dire comment on protège des informations pour que personne d'autre ne puisse les lire.\n\nJe pensais que c'était que des maths super compliquées, et c'est un peu vrai, mais j'ai compris l'idée générale : on transforme un message en code, et seule la bonne clé permet de le lire.\n\nC'est un sujet qui me semble difficile mais important, je vais continuer à creuser petit à petit.",
+      "J'ai repris quelques bases de cryptographie ce week-end, et j'ai mieux compris la différence entre chiffrement symétrique et asymétrique (même si j'ai encore du mal avec les détails mathématiques).\n\nEn gros, l'idée c'est juste de transformer un message pour que seule la bonne clé permette de le relire.\n\nC'est un sujet où je sens que j'ai encore beaucoup de chemin à faire, mais je trouve ça passionnant de comprendre ce qui se passe derrière nos mots de passe et nos messages sécurisés.",
+      "Pour comprendre la cryptographie, l'image qui m'a le plus aidé : imaginez une boîte aux lettres où tout le monde peut déposer un message, mais où une seule personne a la clé pour l'ouvrir.\n\nC'est un peu le principe du chiffrement asymétrique, et une fois qu'on a cette image en tête, le reste devient plus clair.\n\nEncore beaucoup de maths à digérer derrière, mais l'idée générale, ça va.",
+      "Ce que je retiens de mes lectures sur la cryptographie cette semaine :\n\n1/ Chiffrer, c'est transformer un message pour le rendre illisible sans la bonne clé.\n\n2/ Il existe deux grandes familles : une clé unique partagée, ou une paire clé publique/clé privée.\n\n3/ C'est ce qui protège concrètement nos mots de passe et nos paiements en ligne.\n\nSujet dur mais passionnant.",
+      "J'ai essayé de chiffrer puis déchiffrer un message à la main avec une méthode simple pour un exercice de cours, avant de voir les vraies méthodes utilisées en informatique.\n\nÇa parait ridicule à côté de ce qui existe vraiment, mais ça m'a aidé à comprendre le principe de base avant d'attaquer la théorie plus complexe.",
+      "Un chiffre qui donne le vertige : certaines clés de chiffrement modernes prendraient littéralement des milliards d'années à deviner par force brute avec la puissance de calcul actuelle.\n\nÇa remet en perspective à quel point ces mécanismes, invisibles au quotidien, sont puissants."
+    ]
+  },
+  "RGPD": {
+    "a": [
+      "J'ai appris que le RGPD c'est pas qu'un truc pour les avocats, ça concerne aussi la cybersécurité.",
+      "Je continue à m'intéresser au RGPD, et je trouve que c'est plus lié à la cybersécurité que je ne le pensais.",
+      "Le RGPD, ce sigle qu'on voit sur tous les sites sans vraiment savoir ce qu'il protège concrètement.",
+      "Un prof m'a dit un truc qui m'a marqué : le RGPD, c'est de la cybersécurité écrite en langage juridique.",
+      "J'ai fait une demande d'accès à mes propres données sur une appli, juste pour voir ce que ça donnait. La liste était bien plus longue que ce que j'imaginais."
+    ],
+    "c": [
+      "Je pensais que le RGPD (les règles sur la protection des données personnelles) c'était juste un truc juridique. En fait ça a aussi un vrai lien avec la cybersécurité.\n\nPar exemple les entreprises doivent protéger nos données avec des moyens techniques, et prévenir rapidement si jamais elles sont piratées.\n\nC'est un sujet que je découvre, mais je trouve ça important de comprendre les deux côtés (technique et règles) pour bien faire ce métier plus tard.",
+      "En reparlant du RGPD avec un prof, j'ai compris un autre aspect : les entreprises doivent non seulement protéger nos données, mais aussi être capables de prouver qu'elles le font correctement.\n\nÇa veut dire des mesures techniques (comme le chiffrement) mais aussi de l'organisation en interne.\n\nC'est un sujet que je vois trop souvent comme \"juste du juridique\", alors qu'il y a un vrai lien avec la technique. Je continue à apprendre les deux côtés.",
+      "Avant, je voyais le RGPD comme une case à cocher sur les sites internet, rien de plus.\n\nEn creusant, j'ai compris que derrière, il y a de vraies obligations techniques : chiffrer les données sensibles, limiter qui y a accès, prévenir vite en cas de fuite.\n\nLe droit et la technique sont beaucoup plus liés que je ne le pensais.",
+      "Ce qui m'a marqué en étudiant le RGPD : une entreprise doit être capable de PROUVER qu'elle protège nos données, pas juste dire qu'elle le fait.\n\nÇa change tout niveau organisation interne, pas seulement niveau technique.\n\nEncore un sujet où le juridique et la cybersécurité se rejoignent plus que je ne le pensais.",
+      "J'ai fait une demande d'accès à mes données sur une appli que j'utilise beaucoup, juste pour voir ce que ça donnait en pratique (c'est un droit garanti par le RGPD). Résultat : une liste bien plus longue que ce que j'imaginais.\n\nÇa m'a donné un aperçu concret de ce que le règlement protège vraiment.",
+      "J'ai suivi l'actu d'une entreprise sanctionnée pour ne pas avoir assez protégé les données de ses utilisateurs. Ce qui m'a marqué : la sanction ne venait pas d'un piratage, mais du simple fait de ne pas avoir mis en place les mesures de protection attendues.\n\nLe RGPD, ce n'est pas juste réagir après coup, c'est anticiper."
+    ]
+  },
+  "Mots de passe": {
+    "a": [
+      "Je me suis mis à utiliser un gestionnaire de mots de passe, et je me demande pourquoi j'ai attendu aussi longtemps.",
+      "On parle souvent de hacking impressionnant, mais la base de la cybersécurité c'est juste d'avoir de bons mots de passe.",
+      "J'ai vérifié en combien de temps un ordinateur peut deviner mon ancien mot de passe. Résultat gênant.",
+      "La base de la cybersécurité tient parfois à un détail bête : ne pas réutiliser le même mot de passe partout.",
+      "J'ai vérifié les mots de passe de mes parents (juste la force, pas le contenu). Sans surprise, quasiment les mêmes partout depuis des années."
+    ],
+    "c": [
+      "J'ai commencé à utiliser un gestionnaire de mots de passe parce que je me rendais compte que j'utilisais souvent les mêmes mots de passe partout (pas une bonne idée, je sais).\n\nMaintenant chaque compte a un mot de passe différent et compliqué, généré automatiquement, et je n'ai qu'un seul mot de passe à retenir pour tout déverrouiller.\n\nC'est un des trucs les plus simples à mettre en place pour se protéger, et pourtant je ne le faisais pas avant de m'intéresser à la cybersécurité.",
+      "Je continue à appliquer des bases simples de cybersécurité dans ma vie de tous les jours, comme avoir un mot de passe différent pour chaque compte important.\n\nAvant je pensais qu'un mot de passe \"compliqué\" suffisait, mais j'ai appris que le vrai problème c'est de réutiliser le même partout : si un site est piraté, tous les autres comptes deviennent vulnérables.\n\nPetit changement, mais ça fait une vraie différence.",
+      "J'ai testé un outil qui estime le temps nécessaire pour deviner un mot de passe par force brute.\n\nMon ancien mot de passe \"compliqué\" ? Quelques heures. Le nouveau, généré aléatoirement et plus long ? Plusieurs siècles.\n\nLa longueur compte plus que la complexité apparente, et ça change ma façon de voir la question.",
+      "3 changements simples que j'ai faits sur mes mots de passe depuis que je m'intéresse à la cybersécurité :\n\n1/ Un gestionnaire de mots de passe pour ne plus réutiliser les mêmes.\n\n2/ Des phrases longues plutôt que des mots compliqués mais courts.\n\n3/ La double authentification partout où c'est possible.\n\nRien de très technique, mais ça change vraiment la donne.",
+      "J'ai vérifié les mots de passe de mes parents avec leur accord (juste la force, pas le contenu), et sans surprise, quasiment les mêmes partout depuis des années.\n\nOn a passé une soirée à tout changer et à installer un gestionnaire. Petite mission famille accomplie.",
+      "Un chiffre qui m'a marqué : les mots de passe les plus utilisés au monde restent encore aujourd'hui des suites genre \"123456\" ou le mot \"password\".\n\nAprès tout ce qu'on apprend sur les risques, ça montre que le problème n'est pas technique, il est humain."
+    ]
+  },
+  "Authentification 2FA": {
+    "a": [
+      "J'ai activé la double authentification sur tous mes comptes importants ce week-end.",
+      "Un code reçu par appli en plus du mot de passe : voilà un truc simple qui protège vraiment beaucoup.",
+      "5 minutes par compte pour rendre un piratage beaucoup, beaucoup plus difficile. Le calcul est vite fait.",
+      "On m'a volé un mot de passe une fois (base de données piratée ailleurs). La 2FA a probablement sauvé mon compte ce jour-là.",
+      "Petit changement récent : je suis passé des codes 2FA par SMS à une application d'authentification, plus difficile à intercepter."
+    ],
+    "c": [
+      "Ce week-end j'ai pris le temps d'activer la double authentification (2FA) sur mes comptes principaux : mail, réseaux sociaux, etc.\n\nEn gros, même si quelqu'un trouve mon mot de passe, il lui faudrait aussi un code généré sur mon téléphone pour se connecter. Ça complique beaucoup les choses pour un attaquant.\n\nC'est gratuit, ça prend 5 minutes par compte, et c'est clairement un des conseils de cybersécurité les plus simples à appliquer.",
+      "Je recommande à tout le monde autour de moi d'activer la double authentification, depuis que j'ai compris à quel point ça change la sécurité d'un compte.\n\nC'est juste une étape en plus à la connexion, mais ça empêche la grande majorité des piratages de comptes classiques.\n\nC'est le genre de conseil simple que j'aimerais avoir entendu plus tôt.",
+      "Avant d'activer la double authentification partout, je pensais que ça allait juste m'embêter à chaque connexion.\n\nEn fait, une fois configurée, on la voit à peine au quotidien, et elle bloque la grande majorité des tentatives de piratage classiques.\n\nLe petit effort de départ vaut largement la tranquillité que ça donne après.",
+      "Ce que beaucoup ne savent pas sur la double authentification : même si votre mot de passe fuite dans une base de données piratée ailleurs, votre compte reste protégé sans le second facteur.\n\nC'est littéralement le conseil le plus simple et le plus efficace que je peux donner.",
+      "J'ai lu le témoignage de quelqu'un qui a évité un piratage de compte grâce à la 2FA, alors que son mot de passe avait fuité dans une base de données piratée ailleurs. Sans ce deuxième verrou, il perdait direct l'accès.\n\nÇa illustre bien pourquoi ce petit réglage change tout le jour où ça compte vraiment.",
+      "Petit conseil que j'applique depuis peu : privilégier une application d'authentification plutôt que les codes reçus par SMS, plus faciles à intercepter.\n\nÇa prend 2 minutes à configurer pour un niveau de protection nettement meilleur."
+    ]
+  },
+  "Ingénierie sociale": {
+    "a": [
+      "J'ai découvert que la plupart des piratages ne sont pas que technique, mais jouent surtout sur la confiance des gens.",
+      "Le hacking, c'est pas toujours de la technique pure : parfois c'est juste convaincre quelqu'un de faire une erreur.",
+      "On peut avoir le meilleur pare-feu du monde et se faire avoir par un simple coup de fil bien joué.",
+      "Le maillon le plus faible en cybersécurité, c'est souvent pas la machine. C'est nous.",
+      "On m'a appelé en se faisant passer pour le support technique de mon opérateur. J'ai raccroché et rappelé le numéro officiel moi-même. Rien à voir."
+    ],
+    "c": [
+      "En apprenant les bases de la cybersécurité, j'ai découvert un concept qui m'a marqué : l'ingénierie sociale.\n\nEn gros, plutôt que de pirater un système technique, l'attaquant manipule directement une personne pour qu'elle donne elle-même l'accès (un mot de passe, un clic sur un lien...).\n\nÇa montre bien que la cybersécurité, c'est pas que de la technique, c'est aussi beaucoup de bon sens et de méfiance saine.",
+      "Je continue à m'intéresser à l'ingénierie sociale, parce que je trouve ça presque plus impressionnant que le piratage technique.\n\nUn attaquant peut se faire passer pour un collègue, un technicien, ou même quelqu'un de la famille, juste pour obtenir une info ou un accès.\n\nÇa me fait réfléchir à mes propres réflexes : est-ce que je vérifierais vraiment l'identité de quelqu'un avant de lui donner une information sensible ?",
+      "L'ingénierie sociale, c'est un peu comme un tour de magie : l'attaquant ne force rien, il détourne l'attention pour qu'on lui donne l'info nous-mêmes.\n\nUn faux technicien au téléphone, un mail qui joue sur l'urgence, une fausse demande d'un \"collègue\"... aucune technique compliquée, juste de la manipulation bien préparée.\n\nÇa m'a appris à toujours vérifier avant de faire confiance, même quand ça semble légitime.",
+      "Ce que j'ai retenu sur l'ingénierie sociale en étudiant quelques cas concrets :\n\n1/ L'urgence est presque toujours le premier signal d'alerte.\n\n2/ Un vrai professionnel ne demande jamais un mot de passe par téléphone ou par mail.\n\n3/ Vérifier par un autre canal (rappeler soi-même le numéro officiel) coûte 2 minutes et évite bien des problèmes.\n\nDe la méfiance saine, rien de plus.",
+      "On m'a appelé en se faisant passer pour le \"support technique\" de mon opérateur, en me demandant un code reçu par SMS soi-disant pour \"vérifier mon identité\". J'ai raccroché et rappelé le numéro officiel moi-même : rien à voir avec un vrai appel du service client.\n\nÇa fait bizarre de vivre en vrai ce qu'on apprend en cours.",
+      "J'ai regardé une vidéo où un expert en sécurité teste en direct s'il arrive à se faire ouvrir une porte d'entreprise juste en portant un uniforme crédible et en ayant l'air pressé. Résultat troublant.\n\nÇa montre que la confiance qu'on accorde par réflexe est souvent la faille la plus facile à exploiter."
+    ]
+  },
+  "VPN": {
+    "a": [
+      "J'ai testé un VPN pour la première fois, et j'ai voulu comprendre comment ça marche vraiment.",
+      "Tout le monde parle de VPN mais j'ai mis du temps à comprendre concrètement ce que ça fait.",
+      "J'ai regardé ce qu'un inconnu pouvait voir de ma connexion sur un Wi-Fi public. Ça calme direct.",
+      "Le VPN, c'est utile, mais ça protège beaucoup moins de choses que ce qu'on croit souvent.",
+      "En vacances, j'ai comparé une connexion avec et sans VPN sur le wifi de l'hôtel. Voir la différence en vrai, ça convainc plus qu'un article."
+    ],
+    "c": [
+      "J'ai testé un VPN pour la première fois ce week-end, et j'ai voulu comprendre ce qu'il se passe vraiment derrière.\n\nEn gros, ça crée un genre de tunnel sécurisé entre mon appareil et Internet, donc personne sur le réseau (même un Wi-Fi public) ne peut facilement voir ce que je fais.\n\nC'est pas magique non plus : ça protège la connexion, mais pas le reste (comme mes mots de passe si je les donne moi-même).",
+      "Je continue à comprendre l'utilité d'un VPN, notamment pour les connexions sur des Wi-Fi publics (genre dans un café ou en gare).\n\nSur un réseau public, sans protection, certaines infos peuvent être plus facilement interceptées. Le VPN limite ce risque en chiffrant la connexion.\n\nUn petit réflexe en plus à prendre, surtout en déplacement.",
+      "Avant, je pensais qu'un VPN me rendait \"invisible\" partout sur Internet.\n\nEn creusant, j'ai compris que ça protège surtout la connexion (utile sur un Wi-Fi public), mais que ça ne protège pas mes mots de passe si je les donne moi-même à un faux site.\n\nUn bon outil, mais pas une solution magique à tout.",
+      "Petit test que j'ai fait sur un Wi-Fi public de gare : sans VPN, certaines infos de connexion peuvent être plus facilement interceptées par quelqu'un sur le même réseau.\n\nAvec un VPN activé, ce risque baisse fortement. Un réflexe simple à prendre en déplacement.",
+      "En vacances, j'ai comparé sur mon téléphone une connexion avec et sans VPN sur le wifi de l'hôtel. Avec un outil simple, on voit clairement la différence de ce qui est visible ou non par quelqu'un d'autre sur le même réseau.\n\nConvaincant à voir en vrai plutôt que juste lu dans un article.",
+      "Petit réflexe que j'ai pris : activer le VPN automatiquement dès que mon téléphone se connecte à un wifi public, sans avoir à y penser à chaque fois.\n\nLe configurer une fois évite d'oublier de le faire au pire moment."
+    ]
+  },
+  "Sécurité IoT": {
+    "a": [
+      "En STI2D on parle beaucoup d'objets connectés, et je me suis demandé : est-ce que tous ces objets sont vraiment sécurisés ?",
+      "Les objets connectés (caméras, ampoules, montres...) sont partout, mais j'ai appris qu'ils sont souvent mal protégés.",
+      "Une caméra connectée avec le mot de passe \"admin/admin\" jamais changé. Ça arrive plus souvent qu'on ne croit.",
+      "En STI2D on conçoit des objets connectés. Je commence à me demander si on pense assez à leur sécurité.",
+      "Un camarade de classe m'a montré sa nouvelle enceinte connectée. On a trouvé en 2 minutes qu'elle tournait encore avec le mot de passe d'usine."
+    ],
+    "c": [
+      "En cours de STI2D on étudie pas mal d'objets connectés, et ça m'a donné envie de creuser leur sécurité, vue sous l'angle cybersécurité cette fois.\n\nJ'ai appris que beaucoup d'objets connectés (caméras, montres, ampoules...) ont des mots de passe par défaut jamais changés, ou des mises à jour de sécurité très rares. Ça en fait des cibles assez faciles.\n\nC'est un domaine qui mélange exactement ce qui m'intéresse : l'électronique/l'industriel de mon bac, et la cybersécurité.",
+      "Je continue à relier mon bac STI2D et la cybersécurité à travers le sujet des objets connectés (IoT).\n\nCe qui m'inquiète un peu : ces objets sont de plus en plus présents (maison, usine, ville) mais pas toujours pensés avec la sécurité en priorité au départ.\n\nJe pense que c'est un domaine qui va devenir de plus en plus important, et ça me motive encore plus pour mon orientation.",
+      "Ce que j'ai appris sur la sécurité des objets connectés en creusant le sujet :\n\n1/ Beaucoup gardent leur mot de passe d'usine, jamais changé par l'utilisateur.\n\n2/ Les mises à jour de sécurité sont souvent rares, voire inexistantes après quelques années.\n\n3/ Un seul objet mal protégé peut parfois servir de porte d'entrée vers tout le réseau de la maison.\n\nUn domaine à la croisée de mon bac STI2D et de la cybersécurité.",
+      "J'ai vérifié les objets connectés chez moi ce week-end : une caméra avec le mot de passe par défaut jamais changé, une ampoule jamais mise à jour depuis l'achat.\n\nRien de dramatique, mais ça montre bien qu'on pense rarement à sécuriser ce genre d'objets du quotidien.\n\nCorrigé depuis.",
+      "Un camarade de classe m'a montré fièrement sa nouvelle enceinte connectée. En 2 minutes on a trouvé qu'elle tournait encore avec le mot de passe d'usine, en cherchant simplement le mode d'emploi en ligne.\n\nIl ne savait même pas qu'il pouvait le changer. Petite session de sensibilisation improvisée entre nous.",
+      "J'ai lu qu'un jour des chercheurs en sécurité ont réussi à s'introduire sur le réseau d'une entreprise en passant par... un aquarium connecté oublié dans le hall d'accueil.\n\nÇa paraît presque drôle, mais ça montre bien qu'un seul objet oublié suffit parfois à ouvrir la porte à tout le reste."
+    ]
+  },
+  "Sécurité mobile": {
+    "a": [
+      "Je me suis penché sur la sécurité de mon propre smartphone, et j'ai trouvé plusieurs trucs à corriger.",
+      "On a tous un ordinateur puissant dans la poche (notre téléphone), mais on pense rarement à le sécuriser correctement.",
+      "Mon téléphone contient plus d'infos sensibles que mon ordinateur, et pourtant je le sécurisais moins bien.",
+      "Une appli de lampe torche qui demande l'accès à mes contacts. Pourquoi, sérieusement ?",
+      "Le temps passé sur mon téléphone dépasse largement celui sur mon ordinateur, et pourtant c'est souvent l'appareil le moins sécurisé des deux."
+    ],
+    "c": [
+      "Je me suis penché sur la sécurité de mon propre smartphone ce week-end, en appliquant ce que j'apprends en cybersécurité.\n\nJ'ai vérifié les autorisations données aux applications (certaines avaient accès au micro ou à la localisation sans vraie raison), mis à jour mon système, et activé le verrouillage automatique plus strict.\n\nC'est étrange de se dire qu'on protège plus facilement un ordinateur qu'un téléphone, alors qu'on y stocke autant d'infos sensibles.",
+      "Je continue à appliquer les bases de cybersécurité à mon téléphone, qui contient autant d'infos sensibles qu'un ordinateur, si pas plus.\n\nUn réflexe simple que j'ai pris : vérifier régulièrement quelles applications ont accès à quoi (caméra, contacts, localisation), et désinstaller celles que je n'utilise plus.\n\nPetit à petit, j'essaie de transformer ce que j'apprends en cours en habitudes concrètes.",
+      "Avant, je faisais beaucoup plus attention à la sécurité de mon ordinateur qu'à celle de mon téléphone.\n\nEn y regardant de plus près, j'ai réalisé que mon téléphone contient autant, voire plus, d'infos sensibles : messages, photos, comptes bancaires, localisation.\n\nDepuis, je vérifie les autorisations de chaque appli avant de les garder.",
+      "3 réflexes simples que j'ai pris pour sécuriser mon téléphone :\n\n1/ Vérifier régulièrement les autorisations données à chaque appli.\n\n2/ Désinstaller ce que je n'utilise plus depuis des mois.\n\n3/ Activer le verrouillage automatique rapide, pas juste \"jamais\" par flemme.\n\nDes petits changements, mais qui font une vraie différence.",
+      "Un chiffre qui m'a interpellé : le temps moyen passé sur un smartphone dépasse largement celui passé sur un ordinateur pour beaucoup de gens de mon âge, et pourtant c'est souvent l'appareil le moins sécurisé des deux (pas de mot de passe fort, mises à jour repoussées).\n\nDeux poids, deux mesures.",
+      "J'ai désinstallé une appli de jeu que je n'utilisais plus après avoir vu qu'elle avait accès au micro et à la localisation en permanence, sans lien évident avec son usage.\n\nDepuis, je vérifie les autorisations avant même d'installer une appli, pas seulement après."
+    ]
+  }
 };
 
 /* ════ CONTENUS NIKO ════ */
 const TN = {
-  'Mutuelle santé':{a:["Après 28 ans dans l'assurance, voici ce que la plupart des gens ne savent pas sur leur mutuelle santé.","Ce que je répète à tous mes clients depuis des années sur la mutuelle santé."],
-  c:["28 ans que je travaille dans l'assurance, et la mutuelle santé reste le contrat le plus mal compris par mes clients.\n\nLa plupart choisissent leur mutuelle sur un seul critère : le prix. C'est une erreur que je vois répétée trop souvent.\n\nCe qu'il faut vraiment regarder :\n→ Le taux de remboursement dentaire et optique\n→ Les délais de carence pour les hospitalisations\n→ La facilité de remboursement au quotidien\n\nUne mutuelle à 30€/mois qui ne rembourse pas vos lunettes à 400€ vous coûtera plus cher qu'une à 60€ qui les couvre bien.\n\nN'hésitez pas à me contacter pour un audit de votre couverture.\n\n#MutuelleSanté #Assurance #Prévoyance #ConseilAssurance #Rennes"]},
-  'Assurance moto':{a:["Assurance moto : ce que tout motard devrait vérifier avant chaque saison.","Ce que votre assureur ne vous dira pas toujours sur votre contrat moto."],
-  c:["Passionné de moto et dans l'assurance depuis 28 ans — je vois souvent les deux se croiser douloureusement.\n\nLes erreurs les plus fréquentes sur les contrats moto :\n→ Sous-évaluer la valeur du véhicule\n→ Oublier de déclarer les modifications\n→ Ne pas prendre la garantie conducteur — la plus importante\n→ Confondre assistance 0km et assistance à partir de 50km\n\nLa garantie conducteur protège VOUS en cas d'accident responsable. Sans elle, vous n'avez aucune indemnisation pour vos préjudices corporels.\n\n#AssuranceMoto #Moto #Assurance #ConseilAssurance #Rennes"]},
-  'Prévoyance':{a:["La prévoyance c'est le contrat qu'on souscrit en espérant ne jamais avoir à s'en servir.","Ce qui me préoccupe le plus pour mes clients c'est la prévoyance."],
-  c:["Je le dis depuis des années à mes clients : la prévoyance c'est le parent pauvre de l'assurance en France.\n\nLa réalité que j'ai vue trop de fois : un indépendant qui tombe malade 3 mois. Les indemnités Sécu couvrent à peine 50% du revenu. Sans prévoyance complémentaire, c'est souvent la catastrophe financière.\n\nCe que couvre une bonne prévoyance :\n→ Maintien de revenu en cas d'arrêt de travail\n→ Rente en cas d'invalidité permanente\n→ Capital décès pour protéger votre famille\n\n#Prévoyance #Assurance #ProtectionSociale #ConseilAssurance #Rennes"]},
-  'Épargne retraite':{a:["Il n'est jamais trop tôt pour préparer sa retraite. Il peut être trop tard.","Ce que je dis à tous mes clients de moins de 50 ans sur la retraite."],
-  c:["Dans mon métier j'ai accompagné des centaines de clients vers la retraite. Le constat est toujours le même : ceux qui ont commencé à épargner tôt sont sereins.\n\nLa réforme des retraites a renforcé l'importance de l'épargne individuelle.\n\nLes solutions que j'accompagne le plus :\n→ Le PER : avantage fiscal immédiat + capital à la retraite\n→ L'assurance vie : flexibilité et transmission\n→ L'immobilier locatif : revenus complémentaires\n\nLa meilleure solution dépend de votre situation. C'est pour ça que le conseil personnalisé existe.\n\n#ÉpargneRetraite #PER #AssuranceVie #Retraite #Assurance #Rennes"]},
-  'Assurance vie':{a:["L'assurance vie c'est le produit d'épargne préféré des Français. Et souvent le moins bien compris.","3 choses que votre banquier ne vous dit peut-être pas sur votre assurance vie."],
-  c:["L'assurance vie c'est le couteau suisse de l'épargne française. Mais comme tout outil complexe, il faut savoir s'en servir.\n\n3 points que j'explique à mes clients :\n\n1/ C'est pas que pour la mort. C'est un outil d'épargne long terme avec une fiscalité avantageuse après 8 ans.\n\n2/ Fonds euros = sécurité. Unités de compte = rendement. Dosage selon votre profil.\n\n3/ La clause bénéficiaire c'est CRITIQUE. Trop de contrats ont 'mes héritiers légaux' par défaut. Vérifiez.\n\nUn bilan tous les 2-3 ans avec votre conseiller, c'est de la bonne gestion.\n\n#AssuranceVie #Épargne #Patrimoine #Assurance #Rennes"]},
-  'RC Pro':{a:["RC Pro : obligatoire pour certains, recommandée pour tous.","Un client m'a appelé en panique après un sinistre non couvert. Sa RC Pro avait des exclusions qu'il ignorait."],
-  c:["La Responsabilité Civile Professionnelle c'est le contrat que tous les indépendants doivent avoir.\n\nUn exemple concret : un consultant informatique qui donne un mauvais conseil. Le client subit un préjudice de 80 000€. Sans RC Pro adaptée, le consultant règle ça avec son patrimoine personnel.\n\nCe que doit couvrir une bonne RC Pro :\n→ Les dommages causés à des tiers\n→ Les erreurs et négligences professionnelles\n→ La protection juridique en cas de litige\n\n#RCPro #AssurancePro #Indépendants #Assurance #Rennes"]},
-  'Gestion sinistre':{a:["28 ans d'expérience et la gestion de sinistre reste le moment de vérité de tout contrat.","Ce que je conseille à mes clients dès qu'un sinistre survient."],
-  c:["Un sinistre c'est toujours stressant. Mais ce qu'on fait dans les premières heures peut changer radicalement l'issue.\n\nCe que je dis à mes clients :\n\n→ Déclarez DANS LES DÉLAIS. Chaque contrat a ses délais (2 jours pour un vol, 5 pour dégât des eaux...).\n→ Documentez TOUT. Photos, vidéos, témoignages. Avant de nettoyer.\n→ Ne réparez pas avant expertise pour les dommages importants.\n→ Gardez toutes les factures.\n\nMon rôle c'est d'être là à ce moment. C'est pour ça qu'on a un conseiller.\n\n#GestionSinistre #Assurance #ConseilAssurance #Rennes"]},
-  'Fidélisation client':{a:["Garder un client c'est 5x moins cher qu'en acquérir un nouveau.","Mon secret pour des clients qui restent depuis 15 ans."],
-  c:["28 ans dans l'assurance et j'ai des clients qui me suivent depuis le début. Ce n'est pas dû au hasard.\n\nCe que j'ai appris sur la fidélisation :\n\nLa fidélité se construit dans les moments difficiles. Un client satisfait d'un règlement rapide vous recommandera à 5 personnes. Un client déçu vous quittera et le dira à 10.\n\nCe qui fait revenir les clients :\n→ La disponibilité vraie\n→ Le conseil proactif\n→ La transparence sur les garanties ET les exclusions\n→ La réactivité en cas de problème\n\n#Assurance #FidélisationClient #RelationClient #Rennes"]},
-  'Prospection':{a:["La prospection en assurance a complètement changé en 28 ans."],
-  c:["La prospection en assurance en 2025, c'est plus du tout ce que c'était en 1997 quand j'ai commencé.\n\nÀ l'époque : porte-à-porte, phoning intensif. Aujourd'hui : recommandations, LinkedIn, contenu utile, réseau.\n\nCe qui fonctionne dans mon activité :\n→ Les recommandations clients (80% de mes nouveaux clients)\n→ La présence LinkedIn avec du contenu à valeur\n→ Les partenariats avec des professionnels complémentaires\n→ Les événements réseau à Rennes et en Bretagne\n\nLa clé c'est la confiance avant la vente.\n\n#Assurance #Prospection #DéveloppementCommercial #LinkedIn #Rennes"]},
-  'Cyber risques pro':{a:["Mon fils se forme en cybersécurité. Moi j'assure contre les cyber risques. Les deux sont liés."],
-  c:["Mon fils Simon se forme en cybersécurité. Et dans mon métier, je vois de plus en plus de sinistres cyber chez mes clients professionnels.\n\nLa réalité de 2025 : les PME et indépendants sont des cibles de choix — moins bien protégés que les grandes entreprises.\n\nCe que couvre une assurance cyber pro :\n→ Les pertes d'exploitation suite à une attaque\n→ Les frais de remise en état des systèmes\n→ La responsabilité en cas de fuite de données\n→ L'assistance juridique\n\nUn ransomware qui bloque votre activité 2 semaines, c'est souvent la fin pour un indépendant. On en parle ?\n\n#CyberRisques #AssuranceCyber #PME #Assurance #Rennes"]},
-  'Conseils clients':{a:["28 ans de conseils en assurance. Ce que j'aurais aimé savoir au début."],
-  c:["28 ans dans l'assurance à Rennes. Ce qui m'a le plus appris : les clients eux-mêmes.\n\nCe que j'aurais aimé comprendre plus tôt : un bon conseil commence par l'écoute, pas par les produits.\n\nLes questions que chaque client devrait poser :\n→ Qu'est-ce qui n'est PAS couvert dans ce contrat ?\n→ Que se passe-t-il en cas de sinistre important ?\n→ Ce contrat est-il toujours adapté à ma situation ?\n\nLe rôle d'un conseiller c'est d'anticiper, pas juste de vendre.\n\n#Assurance #ConseilClient #RelationClient #Rennes"]}
+  "Mutuelle santé": {
+    "a": [
+      "Après 28 ans dans l'assurance, voici ce que la plupart des gens ne savent pas sur leur mutuelle santé.",
+      "Ce que je répète à tous mes clients depuis des années sur la mutuelle santé.",
+      "Une mutuelle santé mal choisie, ça se voit surtout le jour où on en a vraiment besoin.",
+      "Deux clients, même revenu, même famille. Deux mutuelles totalement différentes. Voici pourquoi ça n'a rien d'illogique.",
+      "Une cliente a payé de sa poche la moitié d'une couronne dentaire, persuadée que sa mutuelle prenait tout en charge. Le plafond annuel disait autre chose."
+    ],
+    "c": [
+      "28 ans que je travaille dans l'assurance, et la mutuelle santé reste le contrat le plus mal compris par mes clients.\n\nLa plupart choisissent leur mutuelle sur un seul critère : le prix. C'est une erreur que je vois répétée trop souvent.\n\nCe qu'il faut vraiment regarder :\n→ Le taux de remboursement dentaire et optique\n→ Les délais de carence pour les hospitalisations\n→ La facilité de remboursement au quotidien\n\nUne mutuelle à 30€/mois qui ne rembourse pas vos lunettes à 400€ vous coûtera plus cher qu'une à 60€ qui les couvre bien.\n\nN'hésitez pas à me contacter pour un audit de votre couverture.",
+      "La mutuelle santé, c'est un contrat qu'on choisit souvent une fois et qu'on ne revoit jamais.\n\nOr vos besoins changent : un enfant qui arrive, des lunettes ou un appareil dentaire à prévoir, une pathologie qui se déclare. Le contrat souscrit à 25 ans n'est presque jamais adapté à 45 ans.\n\nCe que je recommande à mes clients :\n→ Revoir sa mutuelle tous les 3-4 ans minimum\n→ Vérifier les plafonds annuels, pas seulement les pourcentages de remboursement\n→ Comparer le \"reste à charge\" réel sur vos dépenses de santé habituelles\n\nUn rendez-vous d'une demi-heure peut vous éviter des mauvaises surprises.",
+      "On pense souvent que toutes les mutuelles se valent, à âge et budget équivalents. C'est faux.\n\nDeux contrats au même prix peuvent avoir des plafonds de remboursement dentaire ou optique du simple au triple. La différence ne se voit jamais sur la plaquette commerciale, seulement le jour où la facture arrive.\n\nC'est exactement pour ça qu'un vrai comparatif prend du temps, et que je le fais ligne par ligne avec chaque client.",
+      "3 questions à poser avant de signer une mutuelle santé, quelle que soit votre situation :\n\n1/ Quel est le plafond annuel réel sur le dentaire et l'optique, pas juste le pourcentage affiché ?\n\n2/ Y a-t-il un délai de carence, et sur quels soins ?\n\n3/ Le réseau de soins partenaires correspond-il à vos praticiens habituels ?\n\nTrois questions, dix minutes, et beaucoup de mauvaises surprises évitées.",
+      "Une cliente est venue me voir après avoir payé de sa poche la moitié d'une couronne dentaire, persuadée que sa mutuelle prenait tout en charge \"comme d'habitude\". Le contrat avait un plafond annuel qu'elle n'avait jamais vérifié.\n\nOn l'a ajusté ensemble ce jour-là. Ce genre de situation, je la vois revenir régulièrement.",
+      "Une étude récente sur les mutuelles santé en France montrait que beaucoup d'assurés ne savent pas exactement ce que couvre leur propre contrat en dentaire et en optique.\n\nCe n'est pas un manque d'intérêt de leur part, c'est souvent que personne ne le leur a expliqué simplement. C'est là-dessus que j'essaie de faire la différence en rendez-vous."
+    ]
+  },
+  "Assurance moto": {
+    "a": [
+      "Assurance moto : ce que tout motard devrait vérifier avant chaque saison.",
+      "Ce que votre assureur ne vous dira pas toujours sur votre contrat moto.",
+      "Chez les motards, l'assurance c'est souvent la dernière chose qu'on regarde. Grave erreur.",
+      "La moto qui ressort du garage au printemps, et le contrat qui, lui, n'a pas bougé depuis l'automne.",
+      "On assure facilement la moto. On oublie parfois d'assurer celui qui est dessus. La garantie conducteur reste l'option la moins souscrite, et pourtant la plus importante."
+    ],
+    "c": [
+      "Passionné de moto et dans l'assurance depuis 28 ans — je vois souvent les deux se croiser douloureusement.\n\nLes erreurs les plus fréquentes sur les contrats moto :\n→ Sous-évaluer la valeur du véhicule\n→ Oublier de déclarer les modifications\n→ Ne pas prendre la garantie conducteur — la plus importante\n→ Confondre assistance 0km et assistance à partir de 50km\n\nLa garantie conducteur protège VOUS en cas d'accident responsable. Sans elle, vous n'avez aucune indemnisation pour vos préjudices corporels.",
+      "Chaque printemps c'est le même scénario : la moto ressort du garage et personne ne pense à vérifier son contrat.\n\nQuelques points à contrôler avant de reprendre la route :\n→ La période d'hivernage : certains contrats suspendent les garanties, il faut les réactiver\n→ L'équipement du pilote (casque, gants, blouson) : souvent couvert en complément, encore faut-il l'avoir souscrit\n→ Le kilométrage annuel déclaré : s'il a changé, le contrat doit suivre\n\nCinq minutes de vérification avant de démarrer, ça évite un mauvais réveil en cas de sinistre.",
+      "Un client motard a eu un accident responsable l'an dernier. Sans garantie conducteur, il n'aurait eu droit à aucune indemnisation pour ses propres blessures.\n\nHeureusement, on l'avait ajoutée ensemble deux ans plus tôt. Ce jour-là, ce n'était plus une ligne de contrat, c'était sa protection.\n\nC'est ce genre de moment qui rappelle pourquoi ce métier a du sens.",
+      "Avant de reprendre la route à moto cette saison, trois vérifications rapides :\n\n1/ Le contrat a-t-il bien été réactivé après une période d'hivernage ?\n\n2/ L'équipement (casque, gants, blouson) est-il couvert en cas de sinistre ?\n\n3/ La valeur déclarée du véhicule correspond-elle encore à sa valeur réelle ?\n\nCinq minutes de contrôle, pour rouler l'esprit tranquille.",
+      "Un chiffre que je partage souvent à mes clients motards : la garantie conducteur reste l'une des options les moins souscrites, alors qu'elle protège directement la personne au guidon en cas d'accident responsable.\n\nOn assure facilement la machine, on oublie parfois d'assurer celui qui la conduit.",
+      "Petit conseil de saison pour les motards : prenez en photo votre compteur kilométrique une fois par an et gardez-la.\n\nEn cas de sinistre ou de contrôle du kilométrage déclaré, ça évite bien des discussions inutiles avec l'assureur."
+    ]
+  },
+  "Prévoyance": {
+    "a": [
+      "La prévoyance c'est le contrat qu'on souscrit en espérant ne jamais avoir à s'en servir.",
+      "Ce qui me préoccupe le plus pour mes clients c'est la prévoyance.",
+      "Un client m'a dit un jour : \"la prévoyance, c'est pour les autres.\" Il a changé d'avis après un accident.",
+      "\"Ça n'arrive qu'aux autres\", jusqu'au jour où ça arrive. J'entends cette phrase depuis 28 ans.",
+      "Question que je pose en rendez-vous : si vous étiez arrêté demain pendant deux mois, qui paierait vos charges fixes ?"
+    ],
+    "c": [
+      "Je le dis depuis des années à mes clients : la prévoyance c'est le parent pauvre de l'assurance en France.\n\nLa réalité que j'ai vue trop de fois : un indépendant qui tombe malade 3 mois. Les indemnités Sécu couvrent à peine 50% du revenu. Sans prévoyance complémentaire, c'est souvent la catastrophe financière.\n\nCe que couvre une bonne prévoyance :\n→ Maintien de revenu en cas d'arrêt de travail\n→ Rente en cas d'invalidité permanente\n→ Capital décès pour protéger votre famille",
+      "Un client indépendant m'a longtemps répété que la prévoyance n'était pas une priorité pour lui. Puis un accident de la vie courante l'a arrêté 4 mois.\n\nSans prévoyance complémentaire, la Sécurité sociale seule ne couvre qu'une fraction du revenu habituel pour un indépendant. Les charges fixes, elles, continuent de tomber.\n\nCe qu'il faut vérifier dans un contrat de prévoyance :\n→ Le délai de carence avant indemnisation\n→ La franchise (nombre de jours d'arrêt avant prise en charge)\n→ Si le montant garanti suit vraiment votre revenu réel, pas un forfait minimal\n\nOn n'a pas besoin d'attendre l'accident pour en parler.",
+      "La prévoyance est souvent vue comme une dépense inutile, tant qu'on n'en a pas besoin.\n\nCe que peu de gens réalisent : en cas d'arrêt de travail prolongé, la Sécurité sociale seule ne couvre qu'une fraction du revenu habituel, surtout pour un indépendant. Les charges fixes, elles, continuent.\n\nCe n'est pas une question de pessimisme, c'est une question de calcul.",
+      "Ce que je vérifie systématiquement dans un contrat de prévoyance avec mes clients :\n\n1/ Le délai de carence avant le début de l'indemnisation.\n\n2/ Le montant garanti, en pourcentage du revenu réel et pas d'un forfait générique.\n\n3/ La durée de versement en cas d'invalidité longue.\n\nTrois points qui font toute la différence le jour où on en a besoin.",
+      "Un client artisan a dû s'arrêter 6 semaines après une chute sur un chantier. Sans prévoyance, il aurait dû puiser dans sa trésorerie pro pour payer son loyer. Avec, le maintien de revenu a pris le relais pendant l'arrêt.\n\nCe jour-là, il m'a remercié d'avoir insisté deux ans plus tôt.",
+      "Question que je pose souvent en rendez-vous : si vous étiez arrêté demain pendant deux mois, qui paierait vos charges fixes ?\n\nLa réponse fait souvent réfléchir plus qu'un long discours sur la prévoyance."
+    ]
+  },
+  "Épargne retraite": {
+    "a": [
+      "Il n'est jamais trop tôt pour préparer sa retraite. Il peut être trop tard.",
+      "Ce que je dis à tous mes clients de moins de 50 ans sur la retraite.",
+      "Un client de 35 ans m'a demandé si c'était trop tôt pour parler retraite. Ma réponse : c'est le meilleur moment.",
+      "28 ans que j'entends la même excuse : \"je m'en occuperai plus tard\". Plus tard coûte toujours plus cher.",
+      "Commencer 10 ans plus tôt peut faire une différence de capital considérable à la retraite, à rendement égal. Ce n'est pas une question de talent, c'est une question de calendrier."
+    ],
+    "c": [
+      "Dans mon métier j'ai accompagné des centaines de clients vers la retraite. Le constat est toujours le même : ceux qui ont commencé à épargner tôt sont sereins.\n\nLa réforme des retraites a renforcé l'importance de l'épargne individuelle.\n\nLes solutions que j'accompagne le plus :\n→ Le PER : avantage fiscal immédiat + capital à la retraite\n→ L'assurance vie : flexibilité et transmission\n→ L'immobilier locatif : revenus complémentaires\n\nLa meilleure solution dépend de votre situation. C'est pour ça que le conseil personnalisé existe.",
+      "On me demande souvent à quel âge il faut commencer à épargner pour sa retraite. Ma réponse ne change pas : le plus tôt possible, même avec de petits montants.\n\nCommencer à 30 ans plutôt qu'à 45 ans change complètement l'équation, grâce au temps qui joue en votre faveur sur les versements réguliers.\n\nCe que je constate chez mes clients qui s'y prennent tôt :\n→ Des versements mensuels modestes suffisent à construire un capital solide\n→ Ils gardent une vraie liberté de choix à l'approche de la retraite\n→ Ils subissent beaucoup moins la pression des dernières années avant le départ\n\nCommencer petit mais commencer tôt, c'est souvent le meilleur conseil que je donne.",
+      "Deux clients du même âge, deux trajectoires différentes. Le premier a commencé son PER à 30 ans avec de petits versements. Le second a attendu 48 ans pour s'y mettre sérieusement.\n\nÀ la retraite, l'écart de capital n'a rien à voir avec la différence de revenus entre eux. C'est uniquement une question de temps.\n\nLe meilleur moment pour commencer reste toujours le même : maintenant.",
+      "Trois repères simples pour construire son épargne retraite, quel que soit l'âge de départ :\n\n1/ Commencer petit mais commencer tôt, plutôt qu'attendre le \"bon moment\".\n\n2/ Diversifier entre PER, assurance vie et éventuellement immobilier locatif.\n\n3/ Revoir sa stratégie tous les 5 ans, pas seulement à l'approche de la retraite.\n\nLa régularité compte plus que les gros montants ponctuels.",
+      "Un chiffre qui parle plus que n'importe quel discours : à rendement égal, commencer 10 ans plus tôt peut représenter une différence de capital final considérable, simplement grâce au temps.\n\nCe n'est pas une question de talent d'épargnant, c'est une question de calendrier.",
+      "Petit conseil simple pour l'épargne retraite : automatisez un virement mensuel, même modeste, plutôt que d'épargner \"ce qu'il reste\" en fin de mois.\n\nCe qui est automatique se fait, ce qui dépend de la volonté finit souvent par sauter un mois sur deux."
+    ]
+  },
+  "Assurance vie": {
+    "a": [
+      "L'assurance vie c'est le produit d'épargne préféré des Français. Et souvent le moins bien compris.",
+      "3 choses que votre banquier ne vous dit peut-être pas sur votre assurance vie.",
+      "L'assurance vie n'est pas un placement, c'est une enveloppe. La nuance change tout.",
+      "La clause bénéficiaire la plus fréquente que je corrige en rendez-vous : celle qu'on n'a jamais relue depuis la signature.",
+      "Un client a découvert 15 ans après l'ouverture de son contrat que la clause bénéficiaire désignait encore son ex-conjoint. Jamais mise à jour après le divorce."
+    ],
+    "c": [
+      "L'assurance vie c'est le couteau suisse de l'épargne française. Mais comme tout outil complexe, il faut savoir s'en servir.\n\n3 points que j'explique à mes clients :\n\n1/ C'est pas que pour la mort. C'est un outil d'épargne long terme avec une fiscalité avantageuse après 8 ans.\n\n2/ Fonds euros = sécurité. Unités de compte = rendement. Dosage selon votre profil.\n\n3/ La clause bénéficiaire c'est CRITIQUE. Trop de contrats ont 'mes héritiers légaux' par défaut. Vérifiez.\n\nUn bilan tous les 2-3 ans avec votre conseiller, c'est de la bonne gestion.",
+      "Beaucoup de clients me parlent de \"leur\" assurance vie comme d'un placement unique. En réalité, c'est une enveloppe qui peut contenir plusieurs types de supports très différents.\n\nCe que ça change concrètement :\n→ Vous pouvez ajuster la répartition entre sécurité et rendement sans changer de contrat\n→ La fiscalité avantageuse s'applique à l'enveloppe, pas à un produit figé\n→ La transmission à vos bénéficiaires se fait hors succession classique, dans certaines limites\n\nLe contrat que vous avez ouvert il y a 10 ans n'est pas forcé de rester figé tel quel. Un point régulier permet souvent de mieux l'utiliser.",
+      "On présente souvent l'assurance vie comme réservée à la transmission de patrimoine. C'est réducteur.\n\nC'est avant tout une enveloppe d'épargne flexible, utilisable à tout moment, avec une fiscalité qui s'améliore avec le temps. La transmission n'est qu'un des usages possibles, pas le seul.\n\nRéduire l'assurance vie à un seul objectif, c'est souvent passer à côté de son vrai intérêt.",
+      "Trois points que je vérifie à chaque bilan d'assurance vie avec mes clients :\n\n1/ La clause bénéficiaire correspond-elle toujours à la situation familiale actuelle ?\n\n2/ La répartition fonds euros / unités de compte est-elle toujours adaptée au profil de risque ?\n\n3/ Le contrat a-t-il plus de 8 ans, seuil clé pour la fiscalité ?\n\nUn point tous les 2-3 ans évite bien des surprises.",
+      "Un client a découvert, 15 ans après l'ouverture de son contrat, que la clause bénéficiaire désignait encore son ex-conjoint. Rien d'illégal, juste jamais mis à jour après le divorce.\n\nOn a corrigé ça en un rendez-vous. Un rappel simple : la vie change, le contrat doit suivre.",
+      "Une étude sur l'épargne des Français montrait récemment que l'assurance vie reste le placement préféré, mais aussi l'un des moins bien compris dans ses mécanismes.\n\nCe décalage, je le vois chaque semaine en rendez-vous."
+    ]
+  },
+  "RC Pro": {
+    "a": [
+      "RC Pro : obligatoire pour certains, recommandée pour tous.",
+      "Un client m'a appelé en panique après un sinistre non couvert. Sa RC Pro avait des exclusions qu'il ignorait.",
+      "Beaucoup d'indépendants pensent que leur RC Pro couvre tout. Le jour du sinistre, ils découvrent les exclusions.",
+      "Un mail mal formulé, un chantier mal évalué : la RC Pro sert aussi pour des erreurs qui semblent minuscules au départ.",
+      "Une bonne partie des sinistres en RC Pro viennent d'une simple erreur de conseil ou de délai, pas d'une faute grave. Le quotidien du métier suffit à créer un litige."
+    ],
+    "c": [
+      "La Responsabilité Civile Professionnelle c'est le contrat que tous les indépendants doivent avoir.\n\nUn exemple concret : un consultant informatique qui donne un mauvais conseil. Le client subit un préjudice de 80 000€. Sans RC Pro adaptée, le consultant règle ça avec son patrimoine personnel.\n\nCe que doit couvrir une bonne RC Pro :\n→ Les dommages causés à des tiers\n→ Les erreurs et négligences professionnelles\n→ La protection juridique en cas de litige",
+      "La RC Pro est souvent souscrite en quelques clics, sans vraiment regarder ce qui est exclu du contrat.\n\nCe que je vérifie systématiquement avec mes clients indépendants :\n→ Les activités réellement couvertes (une extension d'activité non déclarée peut annuler la garantie)\n→ Les plafonds par sinistre ET par année\n→ Les exclusions spécifiques au métier (souvent nombreuses dans le conseil et le numérique)\n\nUne RC Pro à bas prix qui ne couvre pas votre activité réelle ne sert à rien le jour où vous en avez besoin.",
+      "Un client graphiste indépendant a livré un visuel avec une erreur de droit à l'image. Rien d'intentionnel, juste une négligence.\n\nSans RC Pro, les frais de recours du client lésé seraient tombés directement sur lui. Avec, la garantie a pris le relais.\n\nCe genre d'erreur arrive à tout le monde, tôt ou tard, dans une carrière d'indépendant.",
+      "Avant de considérer sa RC Pro comme acquise, trois vérifications essentielles :\n\n1/ Toutes vos activités réelles sont-elles bien déclarées dans le contrat ?\n\n2/ Le plafond par sinistre est-il cohérent avec les montants en jeu dans vos missions ?\n\n3/ Les exclusions spécifiques à votre métier sont-elles bien comprises ?\n\nUne RC Pro non adaptée coûte cher, mais seulement le jour du sinistre.",
+      "Un chiffre qui devrait alerter plus d'indépendants : une bonne partie des sinistres en RC Pro viennent d'une simple erreur de conseil ou de délai, pas d'une faute grave.\n\nOn imagine souvent le pire scénario, alors que le quotidien du métier suffit à créer un litige.",
+      "Petit conseil pour les indépendants : relisez la liste des activités couvertes par votre RC Pro dès que votre activité évolue, même légèrement.\n\nUne nouvelle prestation non déclarée peut suffire à annuler la garantie le jour où vous en avez besoin."
+    ]
+  },
+  "Gestion sinistre": {
+    "a": [
+      "28 ans d'expérience et la gestion de sinistre reste le moment de vérité de tout contrat.",
+      "Ce que je conseille à mes clients dès qu'un sinistre survient.",
+      "Le meilleur contrat du monde ne sert à rien si le sinistre est mal déclaré.",
+      "La différence entre un sinistre bien vécu et un sinistre qui tourne au cauchemar se joue dans les 48 premières heures.",
+      "Un client m'a appelé un dimanche soir pour un dégât des eaux, paniqué à l'idée d'avoir raté le délai. On a fait la déclaration ensemble en 10 minutes au téléphone."
+    ],
+    "c": [
+      "Un sinistre c'est toujours stressant. Mais ce qu'on fait dans les premières heures peut changer radicalement l'issue.\n\nCe que je dis à mes clients :\n\n→ Déclarez DANS LES DÉLAIS. Chaque contrat a ses délais (2 jours pour un vol, 5 pour dégât des eaux...).\n→ Documentez TOUT. Photos, vidéos, témoignages. Avant de nettoyer.\n→ Ne réparez pas avant expertise pour les dommages importants.\n→ Gardez toutes les factures.\n\nMon rôle c'est d'être là à ce moment. C'est pour ça qu'on a un conseiller.",
+      "Après 28 ans dans l'assurance, ce que je remarque le plus souvent lors d'un sinistre, ce n'est pas la qualité du contrat, c'est la façon dont il est géré dans les premiers jours.\n\nLes clients qui s'en sortent le mieux sont ceux qui :\n→ Appellent leur conseiller avant de prendre une décision seule\n→ Gardent une trace écrite de chaque échange avec l'assureur\n→ Posent la question \"quel est le délai de traitement attendu ?\" dès le départ\n\nMon rôle, c'est d'être ce point de contact qui simplifie une période déjà stressante.",
+      "On pense souvent que la qualité d'un contrat se juge à sa signature. En réalité, elle se juge au moment du sinistre.\n\nLe même contrat, mal déclaré ou mal documenté, peut donner lieu à une indemnisation très inférieure à ce qu'il prévoyait. Les délais et les preuves comptent autant que les garanties elles-mêmes.\n\nC'est pour ça que j'accompagne mes clients dès les premières heures, pas seulement à la signature.",
+      "Les 3 réflexes à avoir dans les premières heures d'un sinistre, quel qu'il soit :\n\n1/ Déclarer dans les délais du contrat, sans attendre.\n\n2/ Photographier et documenter avant toute réparation.\n\n3/ Appeler son conseiller avant de prendre une décision seul.\n\nCe sont ces trois réflexes, plus que le contrat lui-même, qui font souvent la différence.",
+      "Un client m'a appelé un dimanche soir suite à un dégât des eaux, paniqué à l'idée d'avoir raté le délai de déclaration. On a fait la déclaration ensemble en 10 minutes au téléphone.\n\nCe n'était pas prévu dans mon planning du dimanche, mais c'est exactement pour ces moments-là que ce métier a du sens.",
+      "En 28 ans, j'ai vu la gestion de sinistre évoluer : avant, tout passait par des formulaires papier et des délais de plusieurs semaines. Aujourd'hui, une déclaration bien documentée peut être traitée en quelques jours.\n\nLe fond n'a pas changé : plus vite et mieux c'est documenté, plus vite ça avance."
+    ]
+  },
+  "Fidélisation client": {
+    "a": [
+      "Garder un client c'est 5x moins cher qu'en acquérir un nouveau.",
+      "Mon secret pour des clients qui restent depuis 15 ans.",
+      "Un client fidèle depuis 20 ans m'a dit un jour pourquoi il n'était jamais parti. Sa réponse m'a marqué.",
+      "Un client me disait récemment : \"je ne compare même plus, je sais que tu me préviendrais si mieux existait ailleurs\". Ça se mérite.",
+      "Un client qui reste plus de 10 ans coûte en moyenne bien moins cher à accompagner qu'un nouveau client, et parle de vous bien plus souvent autour de lui."
+    ],
+    "c": [
+      "28 ans dans l'assurance et j'ai des clients qui me suivent depuis le début. Ce n'est pas dû au hasard.\n\nCe que j'ai appris sur la fidélisation :\n\nLa fidélité se construit dans les moments difficiles. Un client satisfait d'un règlement rapide vous recommandera à 5 personnes. Un client déçu vous quittera et le dira à 10.\n\nCe qui fait revenir les clients :\n→ La disponibilité vraie\n→ Le conseil proactif\n→ La transparence sur les garanties ET les exclusions\n→ La réactivité en cas de problème",
+      "Un client qui me suit depuis plus de 20 ans m'a expliqué un jour pourquoi il n'avait jamais changé d'assureur, malgré des offres parfois plus attractives ailleurs.\n\nSa réponse : \"Je sais que si j'ai un problème, c'est toi que j'appelle, pas un centre d'appels.\"\n\nC'est exactement ce qui différencie un contrat d'une relation :\n→ Connaître la situation du client avant qu'il ne l'explique à nouveau\n→ Anticiper un renouvellement plutôt que de le subir\n→ Rester joignable, même pour une simple question\n\nLe prix attire un client. La relation le garde.",
+      "Un client m'a un jour demandé pourquoi je lui avais proposé un contrat moins cher que celui qu'il avait chez moi depuis 5 ans.\n\nMa réponse : parce que sa situation avait changé, et que le contrat initial n'était plus le plus adapté. Il est resté client. Et il en a parlé autour de lui.\n\nLa fidélité se construit sur la franchise, pas sur la vente à tout prix.",
+      "Ce qui, d'après mon expérience, fait vraiment rester un client sur la durée :\n\n1/ Être joignable rapidement, même pour une question simple.\n\n2/ Prévenir avant un renouvellement plutôt que de le laisser passer en silence.\n\n3/ Dire clairement quand un contrat n'est plus adapté, même si ça ne se vend pas ce jour-là.\n\nLa confiance se construit sur la durée, pas sur un seul rendez-vous.",
+      "Un chiffre qui résume bien ce métier : un client qui reste plus de 10 ans coûte en moyenne beaucoup moins cher à accompagner qu'un nouveau client, et parle de vous bien plus souvent autour de lui.\n\nLa fidélité n'est pas qu'une question de sentiment, c'est aussi une question de bon sens économique.",
+      "J'ai lu une étude sur la confiance envers les conseillers en assurance : le critère numéro un cité par les clients n'est pas le prix, c'est la disponibilité en cas de problème.\n\nÇa confirme ce que je constate depuis des années sur le terrain."
+    ]
+  },
+  "Prospection": {
+    "a": [
+      "La prospection en assurance a complètement changé en 28 ans.",
+      "On me demande souvent comment je trouve encore de nouveaux clients après 28 ans. Ma réponse surprend toujours.",
+      "Le meilleur prospect, c'est rarement celui qu'on est allé chercher.",
+      "En 1997, je faisais du porte-à-porte. En 2025, ce sont mes clients qui font la prospection à ma place.",
+      "Un contact LinkedIn m'a écrit juste pour me remercier d'un post qui l'avait aidé à comprendre sa RC Pro. Six mois plus tard, il m'a recommandé à un collègue."
+    ],
+    "c": [
+      "La prospection en assurance en 2025, c'est plus du tout ce que c'était en 1997 quand j'ai commencé.\n\nÀ l'époque : porte-à-porte, phoning intensif. Aujourd'hui : recommandations, LinkedIn, contenu utile, réseau.\n\nCe qui fonctionne dans mon activité :\n→ Les recommandations clients (80% de mes nouveaux clients)\n→ La présence LinkedIn avec du contenu à valeur\n→ Les partenariats avec des professionnels complémentaires\n→ Les événements réseau à Rennes et en Bretagne\n\nLa clé c'est la confiance avant la vente.",
+      "On me demande souvent comment un conseiller avec 28 ans de métier trouve encore de nouveaux clients. La réponse est simple : je n'en cherche presque plus, ce sont eux qui viennent.\n\nCe qui fonctionne dans la durée, ce n'est pas la technique de prospection, c'est ce qui se passe APRÈS la vente :\n→ Un sinistre bien géré génère plus de recommandations qu'une belle offre commerciale\n→ Un client qui comprend vraiment son contrat en parle autour de lui\n→ Rester disponible même quand il n'y a rien à vendre construit la confiance sur la durée\n\nLa meilleure prospection, c'est souvent de bien s'occuper des clients qu'on a déjà.",
+      "On imagine souvent la prospection comme une course permanente à trouver de nouveaux clients. Dans mon expérience, c'est l'inverse qui fonctionne le mieux.\n\nLa majorité de mes nouveaux clients viennent de recommandations, pas de démarchage. Et une recommandation ne se force pas, elle se mérite dans la façon de traiter les clients existants.\n\nLa meilleure prospection reste souvent invisible.",
+      "Ce qui génère le plus de nouveaux clients dans mon activité, dans l'ordre :\n\n1/ Les recommandations de clients satisfaits, de loin le canal le plus fiable.\n\n2/ La présence régulière sur LinkedIn avec du contenu utile, pas juste commercial.\n\n3/ Les partenariats avec d'autres professionnels du secteur.\n\nAucune de ces trois sources ne demande de courir après les prospects.",
+      "Un contact LinkedIn m'a écrit récemment juste pour me remercier d'un post qui l'avait aidé à mieux comprendre sa RC Pro, sans jamais devenir client. Six mois plus tard, il m'a recommandé à un collègue qui, lui, l'est devenu.\n\nLa prospection la plus efficace ressemble de moins en moins à de la prospection.",
+      "Petit constat sur LinkedIn : les posts qui m'apportent le plus de contacts sérieux ne sont jamais ceux qui \"vendent\" directement, ce sont ceux qui expliquent un point technique simplement.\n\nLes gens retiennent l'utilité avant de retenir l'offre commerciale."
+    ]
+  },
+  "Cyber risques pro": {
+    "a": [
+      "Mon fils se forme en cybersécurité. Moi j'assure contre les cyber risques. Les deux sont liés.",
+      "Un client artisan m'a dit : \"le piratage, c'est un problème de grande entreprise.\" Il a changé d'avis après un sinistre.",
+      "La cyberassurance était un sujet de niche il y a 5 ans. Aujourd'hui, c'est une question que je pose à chaque professionnel.",
+      "Mon fils apprend à trouver les failles. Moi j'assure ce qui se passe quand quelqu'un d'autre les trouve avant lui.",
+      "Question que je pose désormais à chaque professionnel : si votre logiciel de facturation était bloqué demain matin, combien de temps tiendriez-vous avant que ça devienne un problème de trésorerie ?"
+    ],
+    "c": [
+      "Mon fils Simon se forme en cybersécurité. Et dans mon métier, je vois de plus en plus de sinistres cyber chez mes clients professionnels.\n\nLa réalité de 2025 : les PME et indépendants sont des cibles de choix — moins bien protégés que les grandes entreprises.\n\nCe que couvre une assurance cyber pro :\n→ Les pertes d'exploitation suite à une attaque\n→ Les frais de remise en état des systèmes\n→ La responsabilité en cas de fuite de données\n→ L'assistance juridique\n\nUn ransomware qui bloque votre activité 2 semaines, c'est souvent la fin pour un indépendant. On en parle ?",
+      "Un client artisan me disait encore récemment que le piratage informatique, \"c'est un problème de grande entreprise, pas pour moi\".\n\nQuelques mois plus tard, son logiciel de facturation était bloqué par un rançongiciel. Deux semaines sans pouvoir émettre une seule facture.\n\nCe que je vois de plus en plus chez les indépendants et petites structures :\n→ Les attaques ciblent justement les structures les moins protégées\n→ Une cyberassurance couvre la perte d'exploitation, pas seulement la remise en état technique\n→ L'accompagnement juridique et la communication de crise font souvent la différence\n\nCe n'est plus une question de taille d'entreprise, c'est une question de dépendance au numérique. Et aujourd'hui, tout le monde en dépend.",
+      "Une TPE de 6 salariés a subi une intrusion sur son logiciel de gestion commerciale. Trois jours sans pouvoir facturer, ni consulter l'historique client.\n\nLe dirigeant pensait que sa taille le mettait à l'abri. C'est même souvent l'inverse : moins de protections en place, donc une cible plus simple.\n\nLa cyberassurance n'a pas empêché l'attaque, mais elle a limité les dégâts financiers et accompagné la remise en route.",
+      "Trois questions que je pose désormais à chaque client professionnel, quelle que soit sa taille :\n\n1/ Que se passe-t-il concrètement si vos outils numériques sont bloqués une semaine ?\n\n2/ Vos données clients sont-elles sauvegardées ailleurs que sur l'ordinateur principal ?\n\n3/ Savez-vous qui contacter en cas d'incident, avant même qu'il n'arrive ?\n\nLa cyberassurance ne remplace pas ces réflexes, elle les complète.",
+      "Un chiffre qui devrait faire réfléchir tout indépendant : une large majorité des petites structures touchées par une cyberattaque n'avaient aucune assurance spécifique, persuadées que \"ça n'arrivait qu'aux grandes entreprises\".\n\nLe numérique ne fait pourtant plus la différence entre grande et petite structure.",
+      "Question que je pose maintenant à chaque professionnel : si votre logiciel de facturation était bloqué demain matin, combien de temps tiendriez-vous avant que ça devienne un vrai problème de trésorerie ?\n\nLa réponse détermine souvent si une cyberassurance a du sens ou non pour l'activité."
+    ]
+  },
+  "Conseils clients": {
+    "a": [
+      "28 ans de conseils en assurance. Ce que j'aurais aimé savoir au début.",
+      "Le meilleur conseil que j'ai reçu en 28 ans de carrière ne venait pas d'un collègue, mais d'un client.",
+      "Un bon conseiller en assurance passe plus de temps à écouter qu'à vendre. Voici pourquoi.",
+      "Le meilleur rendez-vous que j'ai eu cette année a duré 45 minutes, et je n'ai vendu strictement rien.",
+      "Une cliente m'a dit récemment : vous êtes le premier à me demander ce qui m'inquiète avant de me proposer quelque chose. Pour moi c'est juste la base du métier."
+    ],
+    "c": [
+      "28 ans dans l'assurance à Rennes. Ce qui m'a le plus appris : les clients eux-mêmes.\n\nCe que j'aurais aimé comprendre plus tôt : un bon conseil commence par l'écoute, pas par les produits.\n\nLes questions que chaque client devrait poser :\n→ Qu'est-ce qui n'est PAS couvert dans ce contrat ?\n→ Que se passe-t-il en cas de sinistre important ?\n→ Ce contrat est-il toujours adapté à ma situation ?\n\nLe rôle d'un conseiller c'est d'anticiper, pas juste de vendre.",
+      "En 28 ans de carrière, j'ai appris une chose que je n'ai lue dans aucune formation : le meilleur conseil commence toujours par une bonne question, pas par une bonne réponse.\n\nTrop de clients arrivent avec une idée déjà faite de ce qu'il leur faut, souvent basée sur ce qu'un proche a souscrit. Mon rôle n'est pas de valider ce choix automatiquement.\n\nCe que j'essaie de faire à chaque rendez-vous :\n→ Comprendre la situation réelle avant de parler de produits\n→ Expliquer pourquoi une garantie existe, pas juste ce qu'elle coûte\n→ Dire clairement quand un contrat n'est PAS adapté, même si ça ne se vend pas ce jour-là\n\nLa confiance se construit sur ce qu'on ose ne pas vendre.",
+      "On imagine souvent qu'un bon conseiller en assurance est celui qui a réponse à tout, immédiatement.\n\nDans mon expérience, c'est plutôt l'inverse : les meilleurs rendez-vous sont ceux où j'ai pris le temps de comprendre la situation avant de proposer quoi que ce soit, quitte à revenir avec une réponse la semaine suivante.\n\nLa précipitation est rarement bonne conseillère, dans ce métier comme ailleurs.",
+      "Trois questions que je pose systématiquement avant de parler produits, quel que soit le client :\n\n1/ Qu'est-ce qui vous inquiète vraiment dans votre situation actuelle ?\n\n2/ Qu'est-ce qui a changé depuis votre dernier contrat ?\n\n3/ Qu'attendez-vous concrètement en cas de problème ?\n\nLes réponses orientent tout le reste du rendez-vous.",
+      "Une cliente m'a dit récemment : \"vous êtes le premier à me demander ce qui m'inquiète avant de me proposer quelque chose\". Ça m'a marqué, parce que pour moi c'est juste la base du métier.\n\nVisiblement, ce n'est pas toujours ce que les gens vivent ailleurs.",
+      "Au début de ma carrière, je pensais qu'un bon rendez-vous se mesurait au nombre de garanties expliquées. Aujourd'hui, je le mesure à ce que le client a vraiment compris et retenu.\n\nLe contenu du rendez-vous a moins changé que ma façon de le mener."
+    ]
+  }
 };
 
 /* ════ REPOST + CONGRATS ════ */
-const RS=[(ctx)=>`Ce post m'a interpellé et j'avais envie d'y ajouter ma perspective d'étudiant.\n\n${ctx?'Sur "'+ctx+'" : ':''}Ce qui me frappe c'est à quel point les enjeux cyber touchent maintenant tout le monde. En tant que lycéen de 17 ans qui se forme, je vois bien que le gap entre ceux qui comprennent ces risques et les autres se creuse.\n\nVous pensez que l'éducation numérique est suffisante en France ?\n\n#CyberSécurité #Sensibilisation #Alternance2027 #STI2D`,(ctx)=>`Je partage ce post car il touche à quelque chose qui me préoccupe dans ma formation.\n\n${ctx?'"'+ctx+'" — ':''}La cybersécurité évolue si vite qu'on a du mal à former assez de professionnels. Et nous les étudiants on doit souvent se débrouiller seuls.\n\nDes conseils pour un étudiant de Terminale qui vise une alternance cyber en 2027 ?\n\n#CyberSécurité #Formation #Alternance2027 #TryHackMe`];
-const RN=[(ctx)=>`Ce partage m'interpelle dans mon quotidien de conseiller en assurance.\n\n${ctx?'"'+ctx+'" — ':''}Après 28 ans dans le secteur, je vois régulièrement le décalage entre ce que les gens pensent être couverts et ce que leur contrat prévoit.\n\nQuelle est votre plus grande incompréhension sur vos contrats d'assurance ?\n\n#Assurance #ConseilAssurance #Pédagogie #Rennes`,(ctx)=>`Un sujet qui résonne avec ce que j'observe chez mes clients.\n\n${ctx?'Sur "'+ctx+'" : ':''}La relation de confiance entre un client et son conseiller se construit dans la durée. 28 ans dans ce métier m'ont appris que la technique c'est 30% du travail. Le reste c'est l'humain.\n\n#Assurance #RelationClient #Confiance #Rennes`];
+const RS=[(ctx)=>`Ce post m'a interpellé et j'avais envie d'y ajouter ma perspective d'étudiant.\n\n${ctx?'Sur "'+ctx+'" : ':''}Ce qui me frappe c'est à quel point les enjeux cyber touchent maintenant tout le monde. En tant que lycéen de 17 ans qui se forme, je vois bien que le gap entre ceux qui comprennent ces risques et les autres se creuse.\n\nVous pensez que l'éducation numérique est suffisante en France ?\n\n${pickHashtags('repost','simon')}`,(ctx)=>`Je partage ce post car il touche à quelque chose qui me préoccupe dans ma formation.\n\n${ctx?'"'+ctx+'" — ':''}La cybersécurité évolue si vite qu'on a du mal à former assez de professionnels. Et nous les étudiants on doit souvent se débrouiller seuls.\n\nDes conseils pour un étudiant de Terminale qui vise une alternance cyber en 2027 ?\n\n${pickHashtags('repost','simon')}`,(ctx)=>`Je voulais réagir à ce post parce que le sujet me parle directement dans ma formation.\n\n${ctx?'"'+ctx+'" — ':''}Ce que je remarque en tant que lycéen qui débute, c'est que la théorie et la pratique sont vraiment deux mondes différents en cybersécurité. On apprend beaucoup en tâtonnant seul le soir.\n\nD'autres étudiants dans le même cas que moi par ici ?\n\n${pickHashtags('repost','simon')}`];
+const RN=[(ctx)=>`Ce partage m'interpelle dans mon quotidien de conseiller en assurance.\n\n${ctx?'"'+ctx+'" — ':''}Après 28 ans dans le secteur, je vois régulièrement le décalage entre ce que les gens pensent être couverts et ce que leur contrat prévoit.\n\nQuelle est votre plus grande incompréhension sur vos contrats d'assurance ?\n\n${pickHashtags('repost','niko')}`,(ctx)=>`Un sujet qui résonne avec ce que j'observe chez mes clients.\n\n${ctx?'Sur "'+ctx+'" : ':''}La relation de confiance entre un client et son conseiller se construit dans la durée. 28 ans dans ce métier m'ont appris que la technique c'est 30% du travail. Le reste c'est l'humain.\n\n${pickHashtags('repost','niko')}`,(ctx)=>`Ce post rejoint une conviction que j'ai depuis longtemps dans mon métier.\n\n${ctx?'"'+ctx+'" — ':''}Après 28 ans dans l'assurance, je constate que la pédagogie compte souvent plus que la performance technique d'un contrat. Un bon produit mal expliqué finit toujours par décevoir.\n\n${pickHashtags('repost','niko')}`];
 const CG={
-  promotion:(w,n,a)=>a==='simon'?`@${w} — Félicitations pour ce nouveau poste${n?' ('+n+')':''} ! 🎉\n\nC'est vraiment inspirant de voir des profils progresser dans la cybersécurité. En tant qu'étudiant qui cherche à entrer dans ce domaine, ça me motive.\n\n#Cybersécurité #Félicitations #Réseau`:`@${w} — Toutes mes félicitations pour cette promotion${n?' : '+n:''} ! 🎉\n\nAprès 28 ans dans l'assurance, je sais combien ces reconnaissances sont méritées.\n\n#Assurance #Félicitations #Réseau #Rennes`,
-  certification:(w,n,a)=>a==='simon'?`@${w} — Bravo pour cette certification${n?' : '+n:''} ! 🏆\n\nObtenir une certif en cybersécurité ça demande vraiment du boulot. En tant qu'étudiant qui vise à se certifier, je mesure l'effort.\n\n#Cybersécurité #Certification #Félicitations`:`@${w} — Félicitations pour cette certification${n?' : '+n:''} ! 🏆\n\nDans notre secteur, la formation continue c'est pas une option. Bravo pour cet investissement.\n\n#Assurance #Formation #Certification #Félicitations`,
-  diplome:(w,n,a)=>a==='simon'?`@${w} — Félicitations pour ce diplôme${n?' ('+n+')':''} ! 🎓\n\nBelle étape. Bonne suite !\n\n#Cybersécurité #Diplôme #Félicitations`:`@${w} — Bravo pour ce diplôme${n?' ('+n+')':''} ! 🎓\n\nLa formation c'est un investissement qui paie toujours.\n\n#Assurance #Formation #Diplôme #Félicitations`,
-  alternance:(w,n,a)=>a==='simon'?`@${w} — Super pour ce contrat d'alternance${n?' chez '+n:''} ! 🚀\n\nC'est exactement le parcours que je vise pour 2027. Ça me motive à continuer !\n\n#Alternance #Cybersécurité #Félicitations #Alternance2027`:`@${w} — Félicitations pour ce contrat d'alternance${n?' chez '+n:''} ! 🚀\n\nL'alternance c'est le meilleur tremplin pour débuter sa carrière.\n\n#Alternance #Assurance #Félicitations`,
-  projet:(w,n,a)=>a==='simon'?`@${w} — Félicitations pour le lancement${n?' de '+n:''} ! 💡\n\nLes projets qui apportent de la valeur à la communauté cyber font avancer le secteur.\n\n#Cybersécurité #Innovation #Félicitations`:`@${w} — Bravo pour ce lancement${n?' : '+n:''} ! 💡\n\nL'innovation c'est ce qui nous permet de mieux servir nos clients.\n\n#Assurance #Innovation #Félicitations #Rennes`,
-  anniversaire:(w,n,a)=>a==='simon'?`@${w} — ${n?n+' déjà':'Bel anniversaire'} dans la cybersécurité ! 🔐\n\nL'expérience terrain c'est ce que je veux construire. Inspirant !\n\n#Cybersécurité #Anniversaire #Félicitations`:`@${w} — ${n?n:'Bel anniversaire professionnel'} dans l'assurance ! 🎯\n\nL'expérience fait vraiment la différence dans notre métier.\n\n#Assurance #Anniversaire #Félicitations #Rennes`
+  promotion:[(w,n,a)=>a==='simon'?`@${w} — Félicitations pour ce nouveau poste${n?' ('+n+')':''} ! 🎉\n\nC'est vraiment inspirant de voir des profils progresser dans la cybersécurité. En tant qu'étudiant qui cherche à entrer dans ce domaine, ça me motive.\n\n${pickHashtags('promotion','simon')}`:`@${w} — Toutes mes félicitations pour cette promotion${n?' : '+n:''} ! 🎉\n\nAprès 28 ans dans l'assurance, je sais combien ces reconnaissances sont méritées.\n\n${pickHashtags('promotion','niko')}`,(w,n,a)=>a==='simon'?`@${w} — Belle nouvelle pour ce nouveau poste${n?' ('+n+')':''} ! 🚀\n\nÇa fait plaisir de voir ce genre de parcours quand on est encore en train de se former. Ça montre que le secteur recrute vraiment.\n\n${pickHashtags('promotion','simon')}`:`@${w} — Bravo pour cette promotion${n?' : '+n:''} ! 🚀\n\nCe genre d'évolution ne doit rien au hasard. Belle suite à toi.\n\n${pickHashtags('promotion','niko')}`,(w,n,a)=>a==='simon'?`@${w} — Une nouvelle qui fait plaisir à voir passer dans mon fil ! 🎉${n?' ('+n+')':''}\n\nCe genre de parcours, ça motive à continuer de se former sérieusement.\n\n${pickHashtags('promotion','simon')}`:`@${w} — Une belle nouvelle qui mérite d'être relayée${n?' : '+n:''} ! 🎉\n\nCe genre d'évolution se construit sur la durée, rarement par hasard.\n\n${pickHashtags('promotion','niko')}`],
+  certification:[(w,n,a)=>a==='simon'?`@${w} — Bravo pour cette certification${n?' : '+n:''} ! 🏆\n\nObtenir une certif en cybersécurité ça demande vraiment du boulot. En tant qu'étudiant qui vise à se certifier, je mesure l'effort.\n\n${pickHashtags('certification','simon')}`:`@${w} — Félicitations pour cette certification${n?' : '+n:''} ! 🏆\n\nDans notre secteur, la formation continue c'est pas une option. Bravo pour cet investissement.\n\n${pickHashtags('certification','niko')}`,(w,n,a)=>a==='simon'?`@${w} — Félicitations pour cette certification${n?' : '+n:''} ! 🎯\n\nJe sais le temps que ça demande de préparer ce genre de certif, encore plus à côté des cours. Chapeau.\n\n${pickHashtags('certification','simon')}`:`@${w} — Bravo pour cette certification${n?' : '+n:''} ! 🎯\n\nCe genre d'investissement personnel finit toujours par payer, dans notre métier comme ailleurs.\n\n${pickHashtags('certification','niko')}`,(w,n,a)=>a==='simon'?`@${w} — Bravo pour cette certification${n?' : '+n:''} ! 📚\n\nJe sais l'investissement que ça représente, encore plus en parallèle des études. Respect.\n\n${pickHashtags('certification','simon')}`:`@${w} — Belle réussite pour cette certification${n?' : '+n:''} ! 📚\n\nLa formation continue, c'est ce qui fait la différence sur la durée dans ce métier.\n\n${pickHashtags('certification','niko')}`],
+  diplome:[(w,n,a)=>a==='simon'?`@${w} — Félicitations pour ce diplôme${n?' ('+n+')':''} ! 🎓\n\nBelle étape. Bonne suite !\n\n${pickHashtags('diplome','simon')}`:`@${w} — Bravo pour ce diplôme${n?' ('+n+')':''} ! 🎓\n\nLa formation c'est un investissement qui paie toujours.\n\n${pickHashtags('diplome','niko')}`,(w,n,a)=>a==='simon'?`@${w} — Bravo pour ce diplôme${n?' ('+n+')':''} ! 🎓\n\nUne étape en plus vers la cybersécurité. Content de voir ce genre de parcours.\n\n${pickHashtags('diplome','simon')}`:`@${w} — Félicitations pour ce diplôme${n?' ('+n+')':''} ! 🎓\n\nBelle récompense pour le travail fourni. Bonne continuation.\n\n${pickHashtags('diplome','niko')}`,(w,n,a)=>a==='simon'?`@${w} — Toutes mes félicitations pour ce diplôme${n?' ('+n+')':''} ! 🎓\n\nUne étape qui compte, et une motivation de plus pour moi qui vise le même genre de parcours.\n\n${pickHashtags('diplome','simon')}`:`@${w} — Félicitations pour ce diplôme${n?' ('+n+')':''} ! 🎓\n\nLe travail fourni finit toujours par payer. Belle suite à toi.\n\n${pickHashtags('diplome','niko')}`],
+  alternance:[(w,n,a)=>a==='simon'?`@${w} — Super pour ce contrat d'alternance${n?' chez '+n:''} ! 🚀\n\nC'est exactement le parcours que je vise pour 2027. Ça me motive à continuer !\n\n${pickHashtags('alternance','simon')}`:`@${w} — Félicitations pour ce contrat d'alternance${n?' chez '+n:''} ! 🚀\n\nL'alternance c'est le meilleur tremplin pour débuter sa carrière.\n\n${pickHashtags('alternance','niko')}`,(w,n,a)=>a==='simon'?`@${w} — Félicitations pour cette alternance${n?' chez '+n:''} ! 🚀\n\nC'est exactement le genre de nouvelle qui donne envie de continuer à se former sérieusement.\n\n${pickHashtags('alternance','simon')}`:`@${w} — Bravo pour cette alternance${n?' chez '+n:''} ! 🚀\n\nUn bon début de carrière compte souvent plus qu'on ne le pense sur le long terme.\n\n${pickHashtags('alternance','niko')}`,(w,n,a)=>a==='simon'?`@${w} — Bravo pour cette alternance${n?' chez '+n:''} ! 🚀\n\nExactement le genre de parcours que je regarde de près pour 2027. Merci de montrer que c'est possible.\n\n${pickHashtags('alternance','simon')}`:`@${w} — Félicitations pour cette alternance${n?' chez '+n:''} ! 🚀\n\nCe premier pas dans le métier compte plus qu'on ne le pense pour la suite de la carrière.\n\n${pickHashtags('alternance','niko')}`],
+  projet:[(w,n,a)=>a==='simon'?`@${w} — Félicitations pour le lancement${n?' de '+n:''} ! 💡\n\nLes projets qui apportent de la valeur à la communauté cyber font avancer le secteur.\n\n${pickHashtags('projet','simon')}`:`@${w} — Bravo pour ce lancement${n?' : '+n:''} ! 💡\n\nL'innovation c'est ce qui nous permet de mieux servir nos clients.\n\n${pickHashtags('projet','niko')}`,(w,n,a)=>a==='simon'?`@${w} — Bravo pour ce lancement${n?' de '+n:''} ! 💡\n\nCe genre d'initiative donne clairement envie de s'investir encore plus dans ce domaine.\n\n${pickHashtags('projet','simon')}`:`@${w} — Félicitations pour ce lancement${n?' : '+n:''} ! 💡\n\nCe genre d'initiative mérite d'être soutenu. Belle réussite.\n\n${pickHashtags('projet','niko')}`,(w,n,a)=>a==='simon'?`@${w} — Beau lancement${n?' de '+n:''} ! 💡\n\nCe genre d'initiative donne vraiment envie de s'investir encore plus dans ce domaine.\n\n${pickHashtags('projet','simon')}`:`@${w} — Bravo pour ce lancement${n?' : '+n:''} ! 💡\n\nCe genre d'initiative mérite d'être mise en avant. Belle réussite.\n\n${pickHashtags('projet','niko')}`],
+  anniversaire:[(w,n,a)=>a==='simon'?`@${w} — ${n?n+' déjà':'Bel anniversaire'} dans la cybersécurité ! 🔐\n\nL'expérience terrain c'est ce que je veux construire. Inspirant !\n\n${pickHashtags('anniversaire','simon')}`:`@${w} — ${n?n:'Bel anniversaire professionnel'} dans l'assurance ! 🎯\n\nL'expérience fait vraiment la différence dans notre métier.\n\n${pickHashtags('anniversaire','niko')}`,(w,n,a)=>a==='simon'?`@${w} — ${n?n+' dans le métier':'Belle carrière'} en cybersécurité ! 🔐\n\nÇa fait justement le genre de parcours que je regarde de près en ce moment.\n\n${pickHashtags('anniversaire','simon')}`:`@${w} — ${n?n:'Belle date'} dans l'assurance ! 🎯\n\nCe genre d'ancienneté dans le métier, ça se remarque vite dans la qualité du conseil.\n\n${pickHashtags('anniversaire','niko')}`,(w,n,a)=>a==='simon'?`@${w} — ${n?n:'Bel anniversaire professionnel'} en cybersécurité ! 🔐\n\nCe genre de constance dans un métier, ça force le respect, surtout vu d'où je pars.\n\n${pickHashtags('anniversaire','simon')}`:`@${w} — ${n?n:'Belle date'} dans l'assurance ! 🎯\n\nCe genre de fidélité au métier se ressent directement dans la qualité du conseil donné.\n\n${pickHashtags('anniversaire','niko')}`]
 };
+
+/* ════ HASHTAGS (détachés du texte pour éviter les fins toujours identiques) ════ */
+const HT={
+  simon:{
+    generic:['#CyberSécurité','#Alternance2027','#STI2D'],
+    'Pentest':['#Pentest','#TryHackMe','#EthicalHacking','#Débutant'],
+    'SOC':['#SOC','#Analyste','#Cyberdéfense'],
+    'CTF':['#CTF','#TryHackMe','#HackTheBox','#Débutant'],
+    'OSINT':['#OSINT','#Investigation'],
+    'Ransomware':['#Ransomware','#Cybermenace'],
+    'Phishing':['#Phishing','#Vigilance'],
+    'Zero Day':['#ZeroDay','#Vulnérabilité'],
+    'SIEM':['#SIEM','#SOC','#Analyste'],
+    'Cloud Security':['#CloudSecurity','#Cloud'],
+    'Bug Bounty':['#BugBounty','#EthicalHacking'],
+    'Cryptographie':['#Cryptographie','#Chiffrement'],
+    'RGPD':['#RGPD','#DonnéesPersonnelles'],
+    'Mots de passe':['#MotsDePasse','#CyberHygiène'],
+    'Authentification 2FA':['#2FA','#Authentification'],
+    'Ingénierie sociale':['#IngénierieSociale','#Phishing'],
+    'VPN':['#VPN','#Confidentialité'],
+    'Sécurité IoT':['#IoT','#ObjetsConnectés'],
+    'Sécurité mobile':['#SécuritéMobile','#Smartphone'],
+    promotion:['#Carrière','#Réseau'],
+    certification:['#Certification','#Formation'],
+    diplome:['#Diplôme','#Formation'],
+    alternance:['#Alternance','#Recrutement'],
+    projet:['#Innovation'],
+    anniversaire:['#Parcours'],
+    repost:['#VeilleCyber','#ActualitéCyber']
+  },
+  niko:{
+    generic:['#Assurance','#Rennes','#ConseilAssurance'],
+    'Mutuelle santé':['#MutuelleSanté','#Santé'],
+    'Assurance moto':['#AssuranceMoto','#Moto'],
+    'Prévoyance':['#Prévoyance','#ProtectionSociale'],
+    'Épargne retraite':['#ÉpargneRetraite','#PER','#Retraite'],
+    'Assurance vie':['#AssuranceVie','#Épargne','#Patrimoine'],
+    'RC Pro':['#RCPro','#AssurancePro','#Indépendants'],
+    'Gestion sinistre':['#GestionSinistre'],
+    'Fidélisation client':['#FidélisationClient','#RelationClient'],
+    'Prospection':['#Prospection','#DéveloppementCommercial'],
+    'Cyber risques pro':['#CyberRisques','#AssuranceCyber','#PME'],
+    'Conseils clients':['#ConseilClient','#RelationClient'],
+    promotion:['#Carrière','#Réseau'],
+    certification:['#Certification','#Formation'],
+    diplome:['#Diplôme','#Formation'],
+    alternance:['#Alternance'],
+    projet:['#Innovation'],
+    anniversaire:['#Parcours'],
+    repost:['#Veille','#Actualité']
+  }
+};
+/* Choisit entre 2 et 4 hashtags : mélange de tags spécifiques au thème/occasion
+   et de tags génériques du compte, tirés aléatoirement à chaque génération pour
+   éviter que les posts se terminent toujours par le même bloc. */
+function pickHashtags(key,a){
+  const pool=(a==='simon'?HT.simon:HT.niko)||{};
+  const specific=pool[key]||[];
+  const all=[...new Set([...specific,...pool.generic])];
+  if(!all.length)return '';
+  const n=Math.min(all.length,2+Math.floor(Math.random()*3));
+  const shuffled=[...all].sort(()=>Math.random()-0.5);
+  let chosen=shuffled.slice(0,n);
+  if(specific.length && !chosen.some(t=>specific.includes(t))){
+    chosen[0]=pick(specific);
+    chosen=[...new Set(chosen)];
+  }
+  return chosen.join(' ');
+}
+/* Retire un éventuel bloc hashtag final avant comparaison anti-doublon, pour que
+   les textes archivés avant cette mise à jour (hashtags encore intégrés au texte)
+   restent comparables aux nouvelles combinaisons (hashtags désormais séparés). */
+function stripTags(t){return (t||'').replace(/\n\n#[^\n]*$/,'').trim();}
 
 /* ════ FEED CONSOLE ════ */
 const AS=[{src:'CERT-FR',titre:'Campagne phishing active PME françaises',detail:'Spear-phishing avec deepfakes vocaux.'},{src:'ANSSI',titre:'Ransomwares +30% en France 2025',detail:'PME et collectivités restent les principales cibles.'},{src:'TryHackMe',titre:'Nouveaux parcours SOC analyst',detail:'Parcours certifiant avec entreprises françaises.'},{src:'Google',titre:'0-day Chrome corrigé en urgence',detail:'Faille V8 permettant échappée sandbox.'},{src:'HackTheBox',titre:'Top 10 techniques priv esc Linux 2025',detail:'Vecteurs les plus exploités en pentest et CTF.'},{src:'ZATAZ',titre:'2M comptes français exposés',detail:'Base de données mal configurée.'}];
@@ -621,10 +1230,10 @@ function genTxt(opts={}){
   if(t==='original'){
     const themes=a==='simon'?TS:TN;
     const d=themes[tp]||Object.values(themes)[0];
-    return (pick(d.a)+'\n\n'+pick(d.c)+(ctx?'\n\n'+ctx:'')).trim();
+    return [pick(d.a),pick(d.c),ctx,pickHashtags(tp,a)].filter(Boolean).join('\n\n').trim();
   }
   if(t==='repost') return pick(a==='simon'?RS:RN)(ctx||rpTxt.substring(0,80));
-  if(t==='congrats'){const fn=CG[occ]||CG.promotion;return fn(who,note||ctx,a);}
+  if(t==='congrats'){const variants=CG[occ]||CG.promotion;return pick(variants)(who,note||ctx,a);}
   return '';
 }
 
@@ -638,13 +1247,80 @@ function renderPost(text){
   const len=text.length;pm.textContent=`${len} car. · ${tags.length} hashtags`;pm.parentElement.className='pm'+(len>3000?' over':len>2500?' warn':'');
 }
 function cpHt(h){navigator.clipboard.writeText(h).then(()=>toast('Copié : '+h,'in'));}
-function copyPost(){const t=document.getElementById('po').innerText||'';if(!t)return;navigator.clipboard.writeText(t).then(()=>{toast('Copié ! Colle dans LinkedIn 💼','ok');if(lastPost)archive(lastPost,'copie');});}
+function publishLinkedIn(){
+  const text = document.getElementById('po').innerText || '';
+  if(!text){ toast('Génère d\'abord un post','er'); return; }
+  if(lastPost) archive(lastPost,'copie');
+  // iOS Share API — ouvre le menu partage natif
+  if(navigator.share){
+    navigator.share({
+      title: 'Post LinkedIn — '+PR[acc].nom,
+      text: text
+    }).then(()=>{
+      toast('Partagé avec succès ✓','ok');
+      clearGenerator();
+    }).catch(()=>{
+      // Annulé par l'utilisateur ou erreur — fallback clipboard
+      navigator.clipboard.writeText(text).catch(()=>{});
+      toast('Partage annulé — post copié','in');
+    });
+  } else {
+    // Fallback navigateur desktop — copie + ouvre LinkedIn
+    navigator.clipboard.writeText(text).then(()=>{
+      const encoded = encodeURIComponent(text.substring(0,700));
+      window.open('https://www.linkedin.com/feed/?shareActive=true&text='+encoded,'_blank');
+      toast('Post copié + LinkedIn ouvert 💼','ok');
+      clearGenerator();
+    });
+  }
+}
+function clearGenerator(){
+  document.getElementById('pw').style.display='none';
+  document.getElementById('po').innerHTML='';
+  document.getElementById('htb').innerHTML='';
+  document.getElementById('pm').textContent='';
+  lastPost=null;
+}
+function copyPost(){const t=document.getElementById('po').innerText||'';if(!t)return;navigator.clipboard.writeText(t).then(()=>{toast('Copié ! 💼','ok');if(lastPost)archive(lastPost,'copie');});}
 
 function genPost(){
-  const text=genTxt();renderPost(text);
+  const usedTexts=new Set([...Q.map(q=>q.text),...H.map(h=>h.text),...RJ.map(r=>r.text)].map(stripTags));
+  let text, isDup=false;
+  if(typ==='original'){
+    const themes=acc==='simon'?TS:TN;
+    const d=themes[topic]||Object.values(themes)[0];
+    const ctx=document.getElementById('ctx-inp')?.value||'';
+    const finalize=(intro,corps)=>(intro+'\n\n'+corps+(ctx?'\n\n'+ctx:'')).trim();
+    // Toutes les combinaisons possibles pour CE thème précis (choisi par l'utilisateur, pas changé)
+    // Les hashtags sont désormais gérés à part (pickHashtags) : ce ne sont que les combinaisons
+    // narratives (accroche + corps + contexte) qui comptent pour la fraîcheur/anti-doublon.
+    // Même correctif que genOnePost : on évite de réutiliser une accroche déjà visible dans la
+    // file pour ce thème, pour ne jamais avoir deux posts avec la même accroche dans l'aperçu.
+    const introsInQueue=Q.filter(q=>q.type==='original'&&q.topic===topic&&q.account===acc).map(q=>q.text);
+    const combos=[];
+    d.a.forEach(ai=>d.c.forEach(ci=>combos.push({ai,text:finalize(ai,ci)})));
+    let fresh=combos.filter(c=>!usedTexts.has(stripTags(c.text)));
+    const freshNewIntro=fresh.filter(c=>!introsInQueue.some(t=>t.startsWith(c.ai)));
+    if(freshNewIntro.length) fresh=freshNewIntro;
+    let narrative;
+    if(fresh.length){narrative=pick(fresh).text;}
+    else{narrative=pick(combos).text;isDup=true;}
+    text=(narrative+'\n\n'+pickHashtags(topic,acc)).trim();
+  }else{
+    text=genTxt();
+    isDup=usedTexts.has(stripTags(text));
+  }
+  renderPost(text);
   lastPost={id:Date.now(),text,type:typ,topic,label:TL[typ],ts:Date.now(),account:acc};
   if(!stats[acc])stats[acc]={total:0,sent:0};
-  stats[acc].total++;saveAll();updateStats();toast('Post généré ✓','ok');
+  stats[acc].total++;saveAll();updateStats();
+  if(isDup) toast('⚠️ Toutes les variantes de ce thème sont déjà utilisées (texte en double avec un post existant)','er');
+  else toast('Post généré ✓','ok');
+  // Fait tourner automatiquement la pastille de thème pour le prochain clic (voir pickFreshTopic)
+  if(typ==='original'){
+    topic=pickFreshTopic(acc);
+    syncTopicPill(acc,topic);
+  }
 }
 
 function archive(post,src='copie'){
@@ -661,16 +1337,141 @@ function schedPost(){
   saveAll();renderQ();updateStats();toast('Programmé ✓','in');
 }
 
+/* Génère un seul post selon un plan aléatoire (pour auto-refill) */
+function topicKeyOf(p){
+  if(p.type==='congrats') return 'congrats|'+(p.who||'')+'|'+(p.occ||'');
+  if(p.type==='repost') return 'repost|'+(p.content||'');
+  return 'original|'+(p.topic||'');
+}
+function genOnePost(extraAvoid=[]){
+  const plansSimon=[{type:'original',topic:'Pentest'},{type:'congrats',who:'la communauté cyber',occ:'certification'},{type:'original',topic:'CTF'},{type:'repost',content:'actualité cyber 2025'},{type:'original',topic:'SOC'},{type:'congrats',who:'mon réseau',occ:'alternance'},{type:'original',topic:'Bug Bounty'},{type:'original',topic:'OSINT'},{type:'original',topic:'Phishing'},{type:'original',topic:'Zero Day'},{type:'original',topic:'SIEM'},{type:'original',topic:'Cloud Security'},{type:'original',topic:'Cryptographie'},{type:'original',topic:'RGPD'},{type:'original',topic:'Ransomware'},{type:'original',topic:'Mots de passe'},{type:'original',topic:'Authentification 2FA'},{type:'original',topic:'Ingénierie sociale'},{type:'original',topic:'VPN'},{type:'original',topic:'Sécurité IoT'},{type:'original',topic:'Sécurité mobile'}];
+  const plansNiko=[{type:'original',topic:'Mutuelle santé'},{type:'congrats',who:'un client fidèle',occ:'anniversaire'},{type:'original',topic:'Prévoyance'},{type:'repost',content:'réforme assurance 2025'},{type:'original',topic:'Assurance vie'},{type:'congrats',who:'mon réseau assurance',occ:'promotion'},{type:'original',topic:'Conseils clients'},{type:'original',topic:'Assurance moto'},{type:'original',topic:'Épargne retraite'},{type:'original',topic:'RC Pro'},{type:'original',topic:'Gestion sinistre'},{type:'original',topic:'Fidélisation client'},{type:'original',topic:'Prospection'},{type:'original',topic:'Cyber risques pro'}];
+  const plans = acc==='simon' ? plansSimon : plansNiko;
+  // La redondance de thème est acceptée (et même favorisée par la popularité ci-dessous) ;
+  // seul le texte exact déjà utilisé est strictement interdit.
+  // N'accepte jamais un texte déjà en file, déjà publié, déjà supprimé manuellement (rejeté),
+  // ni un texte tout juste vidé par une RAZ (extraAvoid, valable pour cet appel seulement)
+  const usedTexts = new Set([...Q.map(q=>q.text), ...H.map(h=>h.text), ...RJ.map(r=>r.text), ...extraAvoid].map(stripTags));
+  // BUGFIX : cherche une variante VRAIMENT inédite pour un plan, au lieu de tirer un texte
+  // au hasard et croiser les doigts. Avant, avec un tirage aveugle (genTxt) sur 15 essais,
+  // un thème presque épuisé (1 seule variante fraîche sur 16 combinaisons) avait ~35% de
+  // chances de ne jamais tomber dessus en 15 tirages — et finissait donc à tort en "dernier
+  // recours" (doublon accepté) alors qu'une formulation inédite existait bel et bien.
+  function freshTextFor(p){
+    if(p.type==='original'){
+      const themes=acc==='simon'?TS:TN;
+      const d=themes[p.topic]||Object.values(themes)[0];
+      // BUGFIX : deux posts pouvaient tirer la MÊME accroche avec un corps différent — invisibles
+      // l'un de l'autre pour l'anti-doublon (texte complet différent) mais strictement identiques
+      // dans l'aperçu tronqué de la file (qui n'affiche que les ~120 premiers caractères, donc
+      // l'accroche). On évite désormais de réutiliser une accroche déjà présente dans la file
+      // pour ce même thème, tant qu'une alternative existe.
+      const introsInQueue=Q.filter(q=>q.type==='original'&&q.topic===p.topic&&q.account===acc).map(q=>q.text);
+      const combos=[];
+      d.a.forEach(ai=>d.c.forEach(ci=>combos.push({ai,text:(ai+'\n\n'+ci).trim()})));
+      let fresh=combos.filter(c=>!usedTexts.has(c.text));
+      const freshNewIntro=fresh.filter(c=>!introsInQueue.some(t=>t.startsWith(c.ai)));
+      if(freshNewIntro.length) fresh=freshNewIntro;
+      return fresh.length?(pick(fresh).text+'\n\n'+pickHashtags(p.topic,acc)).trim():null;
+    }
+    if(p.type==='congrats'){
+      const variants=CG[p.occ]||CG.promotion;
+      // Chaque variante intègre désormais un tirage aléatoire de hashtags (pickHashtags) ;
+      // on compare donc la version sans hashtags pour juger de la fraîcheur du fond du message.
+      const fresh=variants.map(fn=>fn(p.who,'',acc)).filter(t=>!usedTexts.has(stripTags(t)));
+      return fresh.length?pick(fresh):null;
+    }
+    if(p.type==='repost'){
+      const variants=acc==='simon'?RS:RN;
+      const fresh=variants.map(fn=>fn(p.content||'')).filter(t=>!usedTexts.has(stripTags(t)));
+      return fresh.length?pick(fresh):null;
+    }
+    return null;
+  }
+  // Un plan a-t-il encore au moins une formulation jamais utilisée ? Permet de ne tirer
+  // que parmi les thèmes encore "frais" plutôt que de retomber sur un doublon par malchance.
+  function hasFreshContent(p){return freshTextFor(p)!==null;}
+  // Popularité par thème (somme des vues renseignées manuellement) — favorise les thèmes qui ont bien marché
+  function viewsForTopic(key){
+    return H.filter(h=>h.account===acc && topicKeyOf({type:h.type,topic:h.topic})===key)
+      .reduce((s,h)=>s+(h.views||0),0);
+  }
+  function weightedTake(arr){
+    // Pondération logarithmique : un thème très populaire reste favorisé mais n'écrase plus tout le reste
+    const weights=arr.map(p=>1+Math.min(8,Math.log10(1+viewsForTopic(topicKeyOf(p)))*2.2));
+    const total=weights.reduce((a,b)=>a+b,0);
+    let r=Math.random()*total;
+    for(let i=0;i<arr.length;i++){r-=weights[i];if(r<=0)return arr.splice(i,1)[0];}
+    return arr.splice(arr.length-1,1)[0];
+  }
+  // On ne tire que parmi les plans encore frais. Seulement si TOUT le compte est
+  // épuisé (chaque thème a servi toutes ses variantes), on retombe sur l'ensemble complet.
+  const freshPlans = plans.filter(hasFreshContent);
+  const pool = freshPlans.length ? freshPlans : plans;
+  let post=null, candidates=[...pool];
+  for(let tries=0; tries<15 && !post; tries++){
+    if(!candidates.length) candidates=[...pool];
+    const p=weightedTake(candidates);
+    const text=freshTextFor(p);
+    if(text){
+      const base = Q.length ? Math.max(...Q.map(q=>q.scheduledAt)) : Date.now();
+      post = {id:Date.now()+Math.floor(Math.random()*1000),text,type:p.type,topic:p.topic||p.who||'',label:TL[p.type],scheduledAt:base+48*3600*1000,account:acc};
+    }
+  }
+  let wasDup=false;
+  if(!post){
+    // Dernier recours : tout le compte est vraiment épuisé (vérifié pour de vrai maintenant,
+    // plus par tirage aveugle). On accepte un doublon plutôt que de bloquer la file, mais on
+    // le signale désormais à l'appelant (wasDup) au lieu de le masquer silencieusement.
+    const p=pick(pool),text=genTxt(p);
+    const base = Q.length ? Math.max(...Q.map(q=>q.scheduledAt)) : Date.now();
+    post = {id:Date.now()+Math.floor(Math.random()*1000),text,type:p.type,topic:p.topic||p.who||'',label:TL[p.type],scheduledAt:base+48*3600*1000,account:acc};
+    wasDup=true;
+  }
+  Q.push(post);
+  if(!stats[acc])stats[acc]={total:0,sent:0};
+  stats[acc].total++;
+  return {post, wasDup};
+}
+
+const QUEUE_TARGET = 7;
+/* Maintient la file à QUEUE_TARGET posts en générant automatiquement le manquant.
+   extraAvoid exclut temporairement certains textes (ex: ceux qu'une RAZ vient de vider)
+   sans les ajouter définitivement à l'historique ou aux rejets. */
+function autoRefill(silent=false, extraAvoid=[]){
+  let added = 0, dupCount = 0;
+  while(Q.length < QUEUE_TARGET){
+    const r=genOnePost(extraAvoid);
+    if(r&&r.wasDup) dupCount++;
+    added++;
+  }
+  if(added>0){
+    saveAll();renderQ();updateStats();
+    if(!silent){
+      // BUGFIX : avant, un doublon forcé (thèmes épuisés) passait par ce même toast générique
+      // sans le dire — on ne pouvait pas savoir pourquoi les posts se ressemblaient.
+      if(dupCount>0) toast(`⚠️ ${added} post${added>1?'s':''} régénéré${added>1?'s':''} dont ${dupCount} doublon${dupCount>1?'s':''} — stock de thèmes ${PR[acc].nom} épuisé, ajoute du contenu`,'er');
+      else toast(`🔄 ${added} post${added>1?'s':''} régénéré${added>1?'s':''} automatiquement pour maintenir la file à ${QUEUE_TARGET}`,'in');
+    }
+  }
+}
+
 function autoGen(){
-  const plans=acc==='simon'
-    ?[{type:'original',topic:'Pentest'},{type:'congrats',who:'la communauté cyber',occ:'certification'},{type:'original',topic:'CTF'},{type:'repost',content:'actualité cyber 2025'},{type:'original',topic:'SOC'},{type:'congrats',who:'mon réseau',occ:'alternance'},{type:'original',topic:'Bug Bounty'}]
-    :[{type:'original',topic:'Mutuelle santé'},{type:'congrats',who:'un client fidèle',occ:'anniversaire'},{type:'original',topic:'Prévoyance'},{type:'repost',content:'réforme assurance 2025'},{type:'original',topic:'Assurance vie'},{type:'congrats',who:'mon réseau assurance',occ:'promotion'},{type:'original',topic:'Conseils clients'}];
-  plans.forEach((p,i)=>{
-    const text=genTxt(p);
-    const base=Q.length?Math.max(...Q.map(q=>q.scheduledAt)):Date.now();
-    Q.push({id:Date.now()+i*10,text,type:p.type,topic:p.topic||p.who||'',label:TL[p.type],scheduledAt:base+48*3600*1000,account:acc});
-    if(!stats[acc])stats[acc]={total:0,sent:0};stats[acc].total++;
-  });saveAll();renderQ();updateStats();toast('Planning 7 posts créé ✓','ok');
+  // BUGFIX MAJEUR : ce bouton (le plus visible : "🤖 Planning automatique 7 posts") utilisait
+  // une liste de 7 thèmes 100% FIGÉE — toujours Pentest, congrats-certif, CTF, repost, SOC,
+  // congrats-alternance, Bug Bounty DANS CET ORDRE, à chaque pression — et ne consultait JAMAIS
+  // Q/H/RJ. C'est très probablement LA cause principale de "toujours les mêmes thèmes" puisque
+  // c'est le bouton le plus utilisé pour (re)créer le planning. Il route maintenant vers
+  // genOnePost() : pioche parmi TOUS les thèmes du compte, pondérée par popularité, avec
+  // recherche garantie de texte inédit — exactement la même logique fiable que le reste de l'app.
+  let dupCount=0;
+  for(let i=0;i<7;i++){
+    const r=genOnePost();
+    if(r&&r.wasDup) dupCount++;
+  }
+  saveAll();renderQ();updateStats();rfTmr();
+  if(dupCount>0) toast(`⚠️ Planning créé, mais ${dupCount} post${dupCount>1?'s':''} en doublon — stock de thèmes ${PR[acc].nom} épuisé, ajoute du contenu`,'er');
+  else toast('Planning 7 posts créé ✓','ok');
 }
 
 /* ════ QUEUE ════ */
@@ -691,16 +1492,46 @@ function renderQ(){
         <div class="qtm">${ts}</div>
       </div>
       <div class="qa">
-        <button class="qbtn" onclick="cpQ(${q.id})" style="color:var(--cyan)">📋</button>
-        <button class="qbtn" onclick="prvQ(${q.id})" style="color:var(--muted)">👁</button>
-        <button class="qbtn" onclick="delQ(${q.id})" style="color:var(--muted)">✕</button>
+        <button class="qbtn" onclick="cpQ(${q.id})" style="color:var(--cyan)" title="Copier">📋</button>
+        <button class="qbtn" onclick="pubLiQ(${q.id})" style="color:#0a66c2" title="Publier sur LinkedIn">🚀</button>
+        <button class="qbtn" onclick="prvQ(${q.id})" style="color:var(--muted)" title="Aperçu">👁</button>
+        <button class="qbtn" onclick="delQ(${q.id})" style="color:var(--muted)" title="Supprimer">✕</button>
       </div>
     </div>`;
   }).join('');
 }
-function cpQ(id){const q=Q.find(x=>x.id===id);if(q){navigator.clipboard.writeText(q.text).then(()=>toast('Copié ! Colle dans LinkedIn 💼','ok'));archive({...q},'copie-file');}}
+function pubLiQ(id){
+  const q=Q.find(x=>x.id===id);
+  if(!q) return;
+  archive({...q},'copie-file');
+  if(navigator.share){
+    navigator.share({
+      title:'Post LinkedIn — '+PR[acc].nom,
+      text:q.text
+    }).then(()=>toast('Partagé ✓','ok'))
+    .catch(()=>{navigator.clipboard.writeText(q.text).catch(()=>{});toast('Annulé — post copié','in');});
+  } else {
+    navigator.clipboard.writeText(q.text).catch(()=>{});
+    const encoded=encodeURIComponent(q.text.substring(0,700));
+    window.open('https://www.linkedin.com/feed/?shareActive=true&text='+encoded,'_blank');
+    toast('Post copié + LinkedIn ouvert','ok');
+  }
+}
+function cpQ(id){const q=Q.find(x=>x.id===id);if(q){navigator.clipboard.writeText(q.text).then(()=>toast('Copié ! 💼','ok'));archive({...q},'copie-file');}}
 function prvQ(id){const q=Q.find(x=>x.id===id);if(!q)return;renderPost(q.text);lastPost=q;document.getElementById('pw').scrollIntoView({behavior:'smooth',block:'nearest'});toast('Aperçu chargé','in');}
-function delQ(id){Q=Q.filter(x=>x.id!==id);saveAll();renderQ();updateStats();}
+function delQ(id){
+  if(!confirm('Supprimer ce post de la file ?'))return;
+  const removed=Q.find(x=>x.id===id);
+  if(removed)RJ.unshift({id:removed.id,text:removed.text,type:removed.type,topic:removed.topic,label:removed.label||TL[removed.type],account:acc,rejectedAt:Date.now()});
+  Q=Q.filter(x=>x.id!==id);
+  if(Q.length){
+    const base=Date.now();
+    Q.forEach((q,i)=>{q.scheduledAt=base+(i+1)*48*3600*1000;});
+  }
+  saveAll();renderQ();updateStats();renderRJ();rfTmr();
+  autoRefill();
+  if(Q.length)toast('Échéances recalculées (48h en cascade)','in');
+}
 
 /* ════ TIMER ════ */
 function startTimer(){
@@ -714,8 +1545,31 @@ function startTimer(){
   },1000);toast('Timer démarré ▶','ok');
 }
 function pauseTimer(){tmrRun=false;clearInterval(tmrIv);lsS(SK.timer,false);document.getElementById('st-txt').textContent='En pause';}
-function resetTimer(){pauseTimer();document.getElementById('t-disp').textContent='48:00:00';document.getElementById('st-nxt').textContent='—';document.getElementById('t-nt').textContent='—';document.getElementById('st-txt').textContent='Prêt';}
-function pubNext(){const q=Q.shift();if(!q)return;archive({...q},'publie');renderQ();document.getElementById('t-nt').textContent=Q[0]?.label||'—';renderPost(q.text);lastPost=q;toast(`⚡ "${q.label}" prêt !`,'ok');}
+function resetTimer(){
+  pauseTimer();
+  // Recalculer réellement les échéances de tous les posts en file en cascade de 48h
+  if(Q.length){
+    let base = Date.now();
+    Q.forEach((q,i)=>{
+      q.scheduledAt = base + (i+1)*48*3600*1000;
+    });
+    saveAll();
+    renderQ();
+  }
+  document.getElementById('t-disp').textContent='48:00:00';
+  document.getElementById('st-nxt').textContent=Q.length?'48h':'—';
+  document.getElementById('t-nt').textContent=Q[0]?.label||'—';
+  document.getElementById('st-txt').textContent='Prêt';
+  if(Q.length) toast('Échéances de tous les posts recalculées (48h en cascade)','ok');
+}
+function pubNext(){
+  const q=Q.shift();if(!q)return;
+  archive({...q},'publie');
+  renderQ();
+  document.getElementById('t-nt').textContent=Q[0]?.label||'—';
+  toast(`⚡ "${q.label}" publié automatiquement — voir l'historique`,'ok');
+  autoRefill(true);
+}
 function rfTmr(){
   if(!Q.length){document.getElementById('t-disp').textContent='00:00:00';document.getElementById('st-nxt').textContent='—';document.getElementById('t-nt').textContent='—';return;}
   const diff=Math.max(0,Q[0].scheduledAt-Date.now());
@@ -731,8 +1585,8 @@ function chkMissed(){
   if(!missed.length)return;
   missed.forEach(q=>archive({...q},'publie'));Q=Q.filter(q=>q.scheduledAt>now);
   saveAll();renderQ();renderH();updateStats();
-  toast(`⚡ ${missed.length} post${missed.length>1?'s':''} prêt${missed.length>1?'s':''} !`,'ok');
-  if(missed.length){renderPost(missed[missed.length-1].text);lastPost=missed[missed.length-1];}
+  toast(`⚡ ${missed.length} post${missed.length>1?'s':''} publié${missed.length>1?'s':''} pendant ton absence — voir l'historique`,'ok');
+  autoRefill(true);
 }
 
 /* ════ HISTORIQUE ════ */
@@ -741,7 +1595,7 @@ function renderH(){
   badge.textContent=H.length;
   if(!H.length){list.innerHTML='<div style="text-align:center;color:var(--muted);font-size:12px;padding:14px">Aucun post archivé.</div>';return;}
   const cols={original:'b-bl',repost:'b-or',congrats:'b-gr'};
-  const srcL={'copie':'<span style="font-size:9px;padding:2px 6px;border-radius:8px;background:rgba(0,230,118,.1);color:var(--green);border:1px solid rgba(0,230,118,.2);margin-left:4px">📋</span>','copie-file':'<span style="font-size:9px;padding:2px 6px;border-radius:8px;background:rgba(0,200,255,.1);color:var(--cyan);border:1px solid rgba(0,200,255,.2);margin-left:4px">📋 File</span>','publie':'<span style="font-size:9px;padding:2px 6px;border-radius:8px;background:rgba(255,109,0,.1);color:var(--orange);border:1px solid rgba(255,109,0,.2);margin-left:4px">⚡</span>'};
+  const srcL={'copie':'<span style="font-size:9px;padding:2px 6px;border-radius:8px;background:rgba(0,230,118,.1);color:var(--green);border:1px solid rgba(0,230,118,.2);margin-left:4px">📋</span>','copie-file':'<span style="font-size:9px;padding:2px 6px;border-radius:8px;background:rgba(0,200,255,.1);color:var(--cyan);border:1px solid rgba(0,200,255,.2);margin-left:4px">📋 File</span>','publie':'<span style="font-size:9px;padding:2px 6px;border-radius:8px;background:rgba(255,109,0,.1);color:var(--orange);border:1px solid rgba(255,109,0,.2);margin-left:4px">⚡</span>','manuel':'<span style="font-size:9px;padding:2px 6px;border-radius:8px;background:rgba(255,109,0,.1);color:var(--orange);border:1px solid rgba(255,109,0,.2);margin-left:4px">✍️ Manuel</span>'};
   list.innerHTML=H.slice(0,50).map(h=>{
     const d=new Date(h.publishedAt||h.ts||Date.now());
     const ts=d.toLocaleDateString('fr-FR')+' '+d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
@@ -754,17 +1608,128 @@ function renderH(){
         <span class="htxt">${h.text.substring(0,80)}…</span>
         <button class="hcp" onclick="event.stopPropagation();cpH(${h.id})">📋</button>
         <button class="hcp" onclick="event.stopPropagation();delH(${h.id})" style="color:rgba(255,23,68,.5)">✕</button>
+        ${h.views?`<span class="htm" style="color:var(--cyan)">👁 ${h.views}</span>`:''}
         <span class="htm">${ts}</span>
       </div>
-      <div class="hex" id="hex-${h.id}">${h.text}</div>
+      <div class="hex" id="hex-${h.id}">${h.text}
+        <div style="margin-top:10px;display:flex;align-items:center;gap:8px" onclick="event.stopPropagation()">
+          <label style="font-size:11px;color:var(--muted)">👁 Vues/impressions LinkedIn :</label>
+          <input type="number" min="0" inputmode="numeric" value="${h.views||''}" placeholder="0" style="width:90px;background:#060910;border:1px solid var(--border);border-radius:6px;padding:6px 9px;color:var(--white);font-family:'Space Grotesk',sans-serif;font-size:13px" onchange="setViews(${h.id},this.value)">
+        </div>
+      </div>
       ${tags?`<div class="htgs">${tags}</div>`:''}
     </div>`;
   }).join('');
 }
+function resetGenerated(){
+  if(!Q.length){toast('La file est déjà vide','in');return;}
+  if(!confirm('Vider entièrement la file ('+Q.length+' posts) et la regénérer avec de nouveaux thèmes ? Les posts retirés seront placés dans « Posts mis de côté » (comme une suppression individuelle) pour ne plus jamais revenir.'))return;
+  // Les posts vidés sont archivés dans RJ, la liste affichée à l'écran sous « Posts mis de côté » —
+  // exactement comme delQ() le fait pour une suppression manuelle à l'unité.
+  Q.forEach(q=>RJ.unshift({id:q.id,text:q.text,type:q.type,topic:q.topic,label:q.label||TL[q.type],account:acc,rejectedAt:Date.now()}));
+  const clearedTexts = Q.map(q=>q.text);
+  Q=[];
+  saveAll();renderQ();renderRJ();updateStats();rfTmr();
+  // extraAvoid en ceinture-et-bretelles pour ce rechargement immédiat précis
+  autoRefill(false, clearedTexts);
+  toast('File regénérée — anciens posts mis de côté ✓','ok');
+}
+function dedupQueueVsHistory(silent){
+  const usedTexts=new Set([...H.map(h=>h.text),...RJ.map(r=>r.text)].map(stripTags));
+  const before=Q.length;
+  Q=Q.filter(q=>!usedTexts.has(stripTags(q.text)));
+  const removed=before-Q.length;
+  if(removed>0){saveAll();renderQ();updateStats();rfTmr();}
+  autoRefill(silent);
+  if(removed>0&&!silent)toast(removed+' doublon'+(removed>1?'s':'')+' avec l\'historique retiré'+(removed>1?'s':'')+' de la file','in');
+  return removed;
+}
+function toggleAddH(){
+  const f=document.getElementById('addh-form');
+  const open=f.style.display==='none'||!f.style.display;
+  f.style.display=open?'block':'none';
+  if(open)populateAddHTopics();
+}
+function populateAddHTopics(){
+  const sel=document.getElementById('addh-topic');
+  const themes=acc==='simon'?TS:TN;
+  sel.innerHTML=Object.keys(themes).map(k=>`<option value="${k}">${k}</option>`).join('')+'<option value="">Autre / republication</option>';
+}
+function addManualH(){
+  const txt=document.getElementById('addh-txt').value.trim();
+  if(!txt){toast('Colle le texte du post','er');return;}
+  const topic=document.getElementById('addh-topic').value;
+  const views=Math.max(0,parseInt(document.getElementById('addh-views').value,10)||0);
+  const entry={id:Date.now()+Math.floor(Math.random()*1000),text:txt,type:'original',topic,label:TL.original,account:acc,publishedAt:Date.now(),source:'manuel',views};
+  H.unshift(entry);
+  if(!stats[acc])stats[acc]={total:0,sent:0};
+  stats[acc].sent++;
+  saveAll();renderH();updateStats();
+  dedupQueueVsHistory();
+  document.getElementById('addh-txt').value='';
+  document.getElementById('addh-views').value='';
+  toggleAddH();
+  toast('Post ajouté à l\'historique ✓','ok');
+}
 function tgH(id){const el=document.getElementById('hex-'+id);if(el)el.style.display=el.style.display==='none'?'block':'none';}
+function tgRJ(id){const el=document.getElementById('rjex-'+id);if(el)el.style.display=el.style.display==='none'?'block':'none';}
+function renderRJ(){
+  const list=document.getElementById('rj-list'),badge=document.getElementById('rj-count');
+  if(!list)return;
+  if(badge)badge.textContent='('+RJ.length+')';
+  if(!RJ.length){list.innerHTML='<div style="text-align:center;color:var(--muted);font-size:12px;padding:14px">Aucun post mis de côté pour l\'instant.</div>';return;}
+  const cols={original:'b-bl',repost:'b-or',congrats:'b-gr'};
+  list.innerHTML=RJ.map(r=>{
+    const d=new Date(r.rejectedAt||Date.now());
+    const ts=d.toLocaleDateString('fr-FR')+' '+d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+    const ab=r.account==='niko'?'<span style="font-size:9px;color:var(--orange);margin-left:3px">NJ</span>':'<span style="font-size:9px;color:var(--cyan);margin-left:3px">SJ</span>';
+    return `<div class="hi" onclick="tgRJ(${r.id})">
+      <div class="hir">
+        <span class="bdg hbdg ${cols[r.type]||'b-bl'}">${r.label||TL[r.type]||'📝'}</span>
+        ${ab}
+        <span class="htxt">${r.text.substring(0,80)}…</span>
+        <button class="hcp" onclick="event.stopPropagation();markPublishedRJ(${r.id})" title="Marquer comme publié sur LinkedIn">🚀</button>
+        <button class="hcp" onclick="event.stopPropagation();delRJ(${r.id})" style="color:rgba(255,23,68,.5)" title="Supprimer définitivement">🗑️</button>
+        <span class="htm">${ts}</span>
+      </div>
+      <div class="hex" id="rjex-${r.id}">${r.text}</div>
+    </div>`;
+  }).join('');
+}
+function markPublishedRJ(id){
+  const r=RJ.find(x=>x.id===id);if(!r)return;
+  if(!confirm('Marquer ce post comme publié sur LinkedIn ? (à faire seulement si tu l\'as réellement posté)'))return;
+  archive({id:r.id,text:r.text,type:r.type,topic:r.topic,label:r.label||TL[r.type],account:r.account},'publie');
+  RJ=RJ.filter(x=>x.id!==id);
+  saveAll();renderRJ();
+  toast('Marqué comme publié ✓','ok');
+}
+function delRJ(id){
+  if(!confirm('Supprimer définitivement ce post mis de côté ? Cette action est irréversible.'))return;
+  RJ=RJ.filter(x=>x.id!==id);
+  saveAll();renderRJ();
+  toast('Supprimé définitivement','in');
+}
+function setViews(id,val){
+  const h=H.find(x=>x.id===id);if(!h)return;
+  const n=Math.max(0,parseInt(val,10)||0);
+  h.views=n;saveAll();
+  toast(n?'👁 '+n+' vues enregistrées':'Vues réinitialisées','ok');
+}
 function cpH(id){const h=H.find(x=>x.id===id);if(h)navigator.clipboard.writeText(h.text).then(()=>toast('Copié ✓','ok'));}
-function delH(id){H=H.filter(x=>x.id!==id);saveAll();renderH();updateStats();}
-function clearHist(){H=[];if(stats[acc])stats[acc].sent=0;saveAll();renderH();updateStats();}
+function delH(id){
+  // BUGFIX : contrairement à delQ()/delRJ(), cette action n'avait aucune confirmation.
+  // Or H sert de mémoire "déjà publié" pour éviter les répétitions : la vider par erreur
+  // fait resurgir des sujets déjà postés sans prévenir.
+  if(!confirm('Retirer ce post de l\'historique ? L\'app ne saura plus qu\'il a déjà été publié et pourra le reproposer.'))return;
+  H=H.filter(x=>x.id!==id);saveAll();renderH();updateStats();
+}
+function clearHist(){
+  if(!H.length){toast('L\'historique est déjà vide','in');return;}
+  if(!confirm('Vider tout l\'historique ('+H.length+' posts) ? L\'app oubliera ce qui a déjà été publié et risque de reproposer les mêmes sujets. Cette action est irréversible.'))return;
+  H=[];if(stats[acc])stats[acc].sent=0;saveAll();renderH();updateStats();
+  toast('Historique vidé','in');
+}
 
 /* ════ FÉLICITATIONS ════ */
 function toggleCff(){const f=document.getElementById('cff');f.style.display=f.style.display==='block'?'none':'block';}
@@ -800,19 +1765,53 @@ function genAllCf(){
 }
 
 /* ════ CONSOLE LINKEDIN ════ */
-function toggleLi(){const b=document.getElementById('li-body');const o=b.classList.toggle('open');document.getElementById('li-bdg').textContent=o?'Fermer ▴':'Ouvrir ▾';if(o)renderFeed('actu');}
+function toggleLi(){
+  const b=document.getElementById('li-body');
+  const o=b.classList.toggle('open');
+  document.getElementById('li-bdg').textContent=o?'Fermer ▴':'Ouvrir ▾';
+  if(o){
+    // Reset tous les tabs et re-rendre avec le compte actif
+    document.querySelectorAll('.litp').forEach(b=>b.classList.remove('act'));
+    document.querySelector('.litp').classList.add('act');
+    document.getElementById('tab-actu').style.display='block';
+    document.getElementById('tab-feli').style.display='none';
+    document.getElementById('tab-repost').style.display='none';
+    renderFeed('actu');
+  }
+}
 function showTab(tab,btn){document.querySelectorAll('.litp').forEach(b=>b.classList.remove('act'));btn.classList.add('act');['actu','feli','repost'].forEach(t=>document.getElementById('tab-'+t).style.display=t===tab?'block':'none');renderFeed(tab);}
 function closeLi(){document.getElementById('li-body').classList.remove('open');document.getElementById('li-bdg').textContent='Ouvrir ▾';}
 function getA(i){return acc==='simon'?AS[i]:AN[i];}
+
+function toggleLi(){
+  const b=document.getElementById('li-body');
+  const o=b.classList.toggle('open');
+  document.getElementById('li-bdg').textContent=o?'Fermer ▴':'Ouvrir ▾';
+  if(o){
+    document.querySelectorAll('.litp').forEach(b=>b.classList.remove('act'));
+    document.querySelector('.litp').classList.add('act');
+    document.getElementById('tab-actu').style.display='block';
+    document.getElementById('tab-feli').style.display='none';
+    document.getElementById('tab-repost').style.display='none';
+    // Forcer la mise à jour du texte info avec le compte actif
+    document.getElementById('li-inf').textContent = acc==='simon'
+      ? '📡 Actualités cybersécurité · Simon · Clique pour pré-remplir.'
+      : '📡 Actualités assurance · Nicolas · Clique pour pré-remplir.';
+    renderFeed('actu');
+  }
+}
 function renderFeed(tab){
+  const a = acc; // Capturer acc à cet instant précis
+  const data = a==='simon' ? AS : AN;
   if(tab==='actu'){
-    const data=acc==='simon'?AS:AN;
-    document.getElementById('actu-list').innerHTML=data.map((a,i)=>`<div class="fi"><div class="fia">${a.src.substring(0,2)}</div><div class="fib"><div class="fin">${a.src}</div><div class="fie" style="color:var(--orange)">${a.titre}</div><div class="fit">${a.detail}</div></div><div class="fiac"><button class="fibt fibtg" onclick="uA(${i})">✍️</button><button class="fibt fibtg" onclick="uAr(${i})" style="background:rgba(255,109,0,.1);color:var(--orange)">🔁</button></div></div>`).join('');
+    document.getElementById('actu-list').innerHTML=data.map((d,i)=>`<div class="fi"><div class="fia">${d.src.substring(0,2)}</div><div class="fib"><div class="fin">${d.src}</div><div class="fie" style="color:var(--orange)">${d.titre}</div><div class="fit">${d.detail}</div></div><div class="fiac"><button class="fibt fibtg" onclick="uA(${i})">✍️</button><button class="fibt fibtg" onclick="uAr(${i})" style="background:rgba(255,109,0,.1);color:var(--orange)">🔁</button></div></div>`).join('');
   }else if(tab==='feli'){
     document.getElementById('feli-list').innerHTML=FD.map((f,i)=>`<div class="fi"><div class="fia">${f.name.split(' ').map(w=>w[0]).join('').substring(0,2)}</div><div class="fib"><div class="fin">${f.name}</div><div class="fie">🎉 ${f.event}</div><div class="fit">${f.detail}</div></div><div class="fiac"><button class="fibt fibtg" onclick="uF(${i})">🎉</button></div></div>`).join('');
   }else{
     document.getElementById('rp-list').innerHTML=RD.map((r,i)=>`<div class="fi"><div class="fia">${r.name.split(' ').map(w=>w[0]).join('').substring(0,2)}</div><div class="fib"><div class="fin">${r.name} · <span style="color:var(--muted)">${r.likes}</span></div><div class="fie" style="color:var(--white)">${r.titre}</div><div class="fit">${r.preview}</div></div><div class="fiac"><button class="fibt fibtg" onclick="uR(${i})">🔁</button></div></div>`).join('');
   }
+  // Mettre à jour getA pour utiliser les bonnes données
+  window._currentFeedData = data;
 }
 function uA(i){const a=getA(i);document.querySelector('[data-t="original"]').click();document.getElementById('ctx-inp').value='Parle de : "'+a.titre+'" — '+a.detail;closeLi();toast('Contexte pré-rempli','in');}
 function uAr(i){const a=getA(i);document.querySelector('[data-t="repost"]').click();document.getElementById('rp-txt').value=a.titre+' — '+a.src+'\n\n'+a.detail;closeLi();toast('Post pré-rempli','in');}
@@ -833,15 +1832,16 @@ function syncStatus(s,msg){
 function buildSyncPayload(){
   const other=acc==='simon'?'niko':'simon';
   const payload={updatedAt:Date.now(),stats:stats};
-  payload[acc]={Q:Q,H:H,CF:CF};
-  payload[other]={Q:lsL(qk(other),[]),H:lsL(hk(other),[]),CF:lsL(cfk(other),[])};
+  payload[acc]={Q:Q,H:H,CF:CF,RJ:RJ};
+  payload[other]={Q:lsL(qk(other),[]),H:lsL(hk(other),[]),CF:lsL(cfk(other),[]),RJ:lsL(rjk(other),[])};
   return payload;
 }
 function applySyncPayload(p){
-  ['simon','niko'].forEach(a=>{if(p[a]){lsS(qk(a),p[a].Q||[]);lsS(hk(a),p[a].H||[]);lsS(cfk(a),p[a].CF||[]);}});
+  ['simon','niko'].forEach(a=>{if(p[a]){lsS(qk(a),p[a].Q||[]);lsS(hk(a),p[a].H||[]);lsS(cfk(a),p[a].CF||[]);lsS(rjk(a),p[a].RJ||[]);}});
   if(p.stats){stats=p.stats;lsS(SK.stats,stats);}
-  loadAcc(acc);updateStats();renderQ();renderH();renderCF();
+  loadAcc(acc);updateStats();renderQ();renderH();renderCF();renderRJ();
   lsS(GK.ts,p.updatedAt);
+  dedupQueueVsHistory(true);
 }
 async function ghCreateGist(){
   const t=lsL(GK.tok,'');
@@ -876,6 +1876,53 @@ async function pushSync(){
   }catch(e){syncStatus('er','Envoi échoué');}
   syncBusy=false;
 }
+function buildFullBackup(){
+  const payload={updatedAt:Date.now(),stats:stats,app:'BotLik',exportedAt:Date.now()};
+  ['simon','niko'].forEach(a=>{payload[a]={Q:lsL(qk(a),[]),H:lsL(hk(a),[]),CF:lsL(cfk(a),[]),RJ:lsL(rjk(a),[])};});
+  payload[acc]={Q:Q,H:H,CF:CF,RJ:RJ}; // s'assure que le compte actif en mémoire est bien à jour
+  return payload;
+}
+function downloadBackup(){
+  const payload=buildFullBackup();
+  const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const d=new Date();
+  const stamp=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')+'_'+String(d.getHours()).padStart(2,'0')+'h'+String(d.getMinutes()).padStart(2,'0');
+  const a=document.createElement('a');
+  a.href=url;a.download='botlik-sauvegarde-'+stamp+'.json';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+  toast('Sauvegarde téléchargée ✓','ok');
+}
+function importBackupFile(input){
+  const file=input.files&&input.files[0];
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=(e)=>{
+    try{
+      const payload=JSON.parse(e.target.result);
+      const localSize=localPayloadSize(), remoteSize=remotePayloadSize(payload);
+      let msg='Importer cette sauvegarde ('+remoteSize+' éléments) et remplacer ta version actuelle ('+localSize+' éléments) ?';
+      if(remoteSize<localSize) msg='⚠️ Cette sauvegarde contient moins de données ('+remoteSize+') que ta version actuelle ('+localSize+'). '+msg;
+      if(!confirm(msg)){input.value='';return;}
+      applySyncPayload(payload);
+      lsS(GK.ts,payload.updatedAt||Date.now());
+      toast('Sauvegarde importée ✓','ok');
+    }catch(err){toast('Fichier de sauvegarde invalide','er');}
+    input.value='';
+  };
+  reader.readAsText(file);
+}
+function localPayloadSize(){
+  let n=0;
+  ['simon','niko'].forEach(a=>{n+=lsL(qk(a),[]).length+lsL(hk(a),[]).length+lsL(rjk(a),[]).length;});
+  return n;
+}
+function remotePayloadSize(p){
+  let n=0;
+  ['simon','niko'].forEach(a=>{if(p[a])n+=(p[a].Q?.length||0)+(p[a].H?.length||0)+(p[a].RJ?.length||0);});
+  return n;
+}
 async function pullSync(silent){
   if(!syncReady())return;
   if(!silent)syncStatus('busy');
@@ -887,6 +1934,16 @@ async function pullSync(silent){
     if(!f)throw new Error('fichier introuvable');
     const remote=JSON.parse(f.content);
     if(remote.updatedAt>lsL(GK.ts,0)){
+      const localSize=localPayloadSize(), remoteSize=remotePayloadSize(remote);
+      if(remoteSize<localSize){
+        if(silent){
+          syncStatus('er','Cloud incomplet ('+remoteSize+' vs '+localSize+') — sync ignorée, vérifie manuellement');
+          return;
+        }
+        if(!confirm('⚠️ La version cloud contient moins de données ('+remoteSize+' éléments) que ta version locale ('+localSize+'). Es-tu sûr de vouloir écraser tes données locales avec celles du cloud ?')){
+          syncStatus('idle');toast('Synchro annulée pour protéger tes données locales','in');return;
+        }
+      }
       applySyncPayload(remote);
       if(!silent)toast('Données récupérées depuis le cloud ✓','ok');
     }
@@ -899,17 +1956,55 @@ function queueSync(){
   syncTm=setTimeout(pushSync,1200);
 }
 function toggleSync(){const b=document.getElementById('sy-body');const o=b.classList.toggle('open');document.getElementById('sy-bdg').textContent=o?'Fermer ▴':'Ouvrir ▾';}
+function toggleRJ(){const b=document.getElementById('rj-body');const o=b.classList.toggle('open');document.getElementById('rj-bdg').textContent=o?'Fermer ▴':'Ouvrir ▾';if(o)renderRJ();}
 
 /* ════ INIT ════ */
-const sa=lsL(SK.acc,'simon');acc=sa;loadAcc(sa);
-if(sa==='niko')switchAcc('niko');
-updateStats();renderQ();renderH();renderCF();rfTmr();chkMissed();
+const sa=lsL(SK.acc,'simon');
+if(!LS_AVAILABLE){
+  setTimeout(()=>{
+    toast('⚠️ Stockage indisponible — Safari en navigation privée ? Les données ne seront PAS sauvegardées.','er');
+  }, 800);
+}
+acc=sa;
+loadAcc(sa);
+
+// Appliquer l'UI du compte sauvegardé SANS appeler saveAll ni switchAcc
+(function applyUI(a){
+  const p=PR[a];
+  document.getElementById('btn-s').className='acc-btn'+(a==='simon'?' act-s':'');
+  document.getElementById('btn-n').className='acc-btn'+(a==='niko'?' act-n':'');
+  document.getElementById('dot-s').style.display=a==='simon'?'inline-block':'none';
+  document.getElementById('dot-n').style.display=a==='niko'?'inline-block':'none';
+  const hav=document.getElementById('hdr-av');
+  hav.className='hdr-av '+p.avc;hav.textContent=p.init;
+  document.getElementById('hdr-t').textContent='LinkedIn Bot — '+p.nom;
+  document.getElementById('hdr-s').textContent=p.role+' · Auto-publication 48h';
+  const ap=document.getElementById('ap-div');ap.className='ap '+p.apc;
+  const apav=document.getElementById('ap-av');apav.className='ap-av '+p.avc;apav.textContent=p.init;
+  document.getElementById('ap-name').textContent=p.nom+' — Compte actif';
+  document.getElementById('ap-desc').textContent=p.desc;
+  document.getElementById('ap-li').href=p.li;
+  document.getElementById('li-lnk').href=p.li;
+  document.getElementById('gen-bdg').textContent=a==='simon'?'Simon · Cyber':'Nicolas · Assurance';
+  document.getElementById('sec-s').style.display=a==='simon'?'block':'none';
+  document.getElementById('sec-n').style.display=a==='niko'?'block':'none';
+  document.getElementById('li-inf').textContent=a==='simon'?'📡 Actualités cybersécurité · Clique pour pré-remplir.':'📡 Actualités assurance & réseau · Clique pour pré-remplir.';
+  topic=pickFreshTopic(a);
+})(sa);
+syncTopicPill(sa,topic);
+
+updateStats();renderQ();renderH();renderCF();renderRJ();rfTmr();chkMissed();
 document.getElementById('sy-tok').value=lsL(GK.tok,'');
 document.getElementById('sy-gid').value=lsL(GK.gid,'');
 if(syncReady()){syncStatus('idle');pullSync(true);}
+
+// Pré-rendre le feed APRÈS avoir appliqué l'UI du bon compte (fix iOS notifications)
+setTimeout(()=>renderFeed('actu'), 0);
+
 if('Notification' in window&&Notification.permission==='default')Notification.requestPermission();
 if(lsL(SK.timer,false)&&Q.length){document.getElementById('st-txt').textContent='Reprise…';setTimeout(()=>startTimer(),300);}
-if('serviceWorker' in navigator)navigator.serviceWorker.register('sw-bot.js').catch(()=>{});
+// Service Worker désactivé — évite les problèmes de cache iOS
+// if('serviceWorker' in navigator)navigator.serviceWorker.register('sw-bot.js').catch(()=>{});
 </script>
 </body>
 </html>
